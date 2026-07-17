@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link Hub — ศูนย์รวมลิงก์มอนิเตอร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10141D;
+    --surface:#1A2130;
+    --surface-2:#212A3D;
+    --border:#2B3549;
+    --text:#E9EDF5;
+    --muted:#8C97AC;
+    --amber:#FFB454;
+    --danger:#F87171;
+    --radius:14px;
+    --font-main:'IBM Plex Sans Thai','Noto Sans Thai',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-main);
+    min-height:100vh;
+    background-image:
+      radial-gradient(ellipse 70% 40% at 50% -5%, rgba(255,180,84,.07), transparent),
+      linear-gradient(var(--bg), var(--bg));
+  }
+  .wrap{max-width:580px;margin:0 auto;padding:32px 16px 96px}
+
+  /* ---------- header ---------- */
+  header{text-align:center;margin-bottom:26px}
+  .status-line{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;
+    color:var(--muted);text-transform:uppercase;margin-bottom:14px;
+  }
+  .led{width:8px;height:8px;border-radius:50%;background:var(--amber);
+    box-shadow:0 0 8px var(--amber);animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @media (prefers-reduced-motion:reduce){.led{animation:none}}
+  h1{font-size:26px;font-weight:700;letter-spacing:-.01em;cursor:text;border-radius:8px;padding:2px 8px;display:inline-block}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;cursor:text;border-radius:8px;padding:2px 8px;display:inline-block}
+  h1:focus,.subtitle:focus{outline:2px solid var(--amber);outline-offset:2px;background:var(--surface)}
+  .hint{font-size:11px;color:#5A6478;margin-top:10px}
+
+  /* ---------- toolbar ---------- */
+  .toolbar{display:flex;gap:10px;margin-bottom:14px}
+  .search{
+    flex:1;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:11px 14px;color:var(--text);
+    font-family:var(--font-main);font-size:14px;min-width:0;
+  }
+  .search::placeholder{color:#5A6478}
+  .search:focus{outline:2px solid var(--amber);outline-offset:-1px}
+  .btn{
+    border:1px solid var(--border);background:var(--surface);color:var(--text);
+    border-radius:var(--radius);padding:11px 16px;font-family:var(--font-main);
+    font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;
+    transition:background .15s,border-color .15s;
+  }
+  .btn:hover{background:var(--surface-2)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .btn-amber{background:var(--amber);border-color:var(--amber);color:#1A1206}
+  .btn-amber:hover{background:#FFC272}
+  .btn.active{border-color:var(--amber);color:var(--amber)}
+
+  /* ---------- filter chips ---------- */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .chip{
+    border:1px solid var(--border);background:transparent;color:var(--muted);
+    border-radius:99px;padding:6px 14px;font-family:var(--font-main);
+    font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;
+  }
+  .chip:hover{color:var(--text);border-color:var(--muted)}
+  .chip.sel{background:var(--amber);border-color:var(--amber);color:#1A1206;font-weight:600}
+  .chip:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  /* ---------- groups & cards ---------- */
+  .group{margin-bottom:26px}
+  .group-head{
+    display:flex;align-items:center;gap:10px;margin-bottom:11px;padding:0 2px;
+  }
+  .group-name{
+    font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);border-radius:6px;padding:2px 6px;
+  }
+  .group-name[contenteditable="true"]{cursor:text}
+  .group-name:focus{outline:2px solid var(--amber);background:var(--surface);color:var(--text)}
+  .group-line{flex:1;height:1px;background:var(--border)}
+  .group-count{font-family:var(--font-mono);font-size:11px;color:#5A6478}
+
+  .list{display:flex;flex-direction:column;gap:12px}
+  .card{
+    position:relative;display:block;background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px 18px 16px 20px;text-decoration:none;color:inherit;
+    transition:transform .15s,border-color .15s,background .15s;
+    overflow:hidden;
+  }
+  .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--amber))}
+  .card:hover{transform:translateY(-2px);border-color:var(--c,var(--amber));background:var(--surface-2)}
+  .card:focus-visible{outline:2px solid var(--c,var(--amber));outline-offset:2px}
+  .card-top{display:flex;align-items:center;gap:10px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--c,var(--amber));flex-shrink:0;
+    box-shadow:0 0 6px var(--c,var(--amber))}
+  .card-name{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card-note{color:var(--muted);font-size:13px;margin-top:5px;padding-left:19px}
+  .card-domain{font-family:var(--font-mono);font-size:11px;color:#5A6478;margin-top:7px;padding-left:19px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* manage controls */
+  .controls{display:none;position:absolute;top:10px;right:10px;gap:6px}
+  .manage-mode .controls{display:flex}
+  .manage-mode .card{padding-right:158px}
+  .icon-btn{
+    width:32px;height:32px;border-radius:9px;border:1px solid var(--border);
+    background:var(--bg);color:var(--muted);cursor:pointer;font-size:14px;
+    display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;
+    font-family:var(--font-main);
+  }
+  .icon-btn:hover{color:var(--text);border-color:var(--muted)}
+  .icon-btn.del:hover{color:var(--danger);border-color:var(--danger)}
+  .icon-btn:focus-visible{outline:2px solid var(--amber)}
+
+  /* drag & drop */
+  .drag-handle{
+    display:none;position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    width:30px;height:42px;border-radius:9px;border:1px solid var(--border);
+    background:var(--bg);color:var(--muted);cursor:grab;touch-action:none;
+    align-items:center;justify-content:center;font-size:15px;user-select:none;
+  }
+  .drag-handle:active{cursor:grabbing;color:var(--text);border-color:var(--muted)}
+  .manage-mode .drag-handle{display:flex}
+  .manage-mode .card{padding-left:54px}
+  .card.ghost{
+    position:fixed;z-index:100;pointer-events:none;opacity:.93;
+    transform:rotate(1.5deg);box-shadow:0 16px 42px rgba(0,0,0,.55);margin:0;
+  }
+  .card.drag-src{opacity:.35;border-style:dashed}
+  .is-dragging{user-select:none;-webkit-user-select:none}
+  .is-dragging .card{transition:none}
+  .is-dragging .card:hover{transform:none}
+
+  /* ---------- empty / footer ---------- */
+  .empty{
+    text-align:center;padding:52px 20px;border:1px dashed var(--border);
+    border-radius:var(--radius);color:var(--muted);
+  }
+  .empty p{font-size:14px;line-height:1.7}
+  .empty .btn{margin-top:16px}
+  footer{
+    margin-top:36px;display:flex;justify-content:center;gap:18px;
+  }
+  footer button{
+    background:none;border:none;color:#5A6478;font-family:var(--font-main);
+    font-size:12px;cursor:pointer;padding:4px;
+  }
+  footer button:hover{color:var(--muted);text-decoration:underline}
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(8,11,17,.72);backdrop-filter:blur(3px);
+    display:none;align-items:flex-end;justify-content:center;z-index:50;padding:0;
+  }
+  .overlay.open{display:flex}
+  .modal{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:20px 20px 0 0;padding:24px 20px 28px;width:100%;max-width:580px;
+    max-height:88vh;overflow-y:auto;
+  }
+  .modal h2{font-size:18px;margin-bottom:18px}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500}
+  .field input{
+    width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
+    padding:12px 14px;color:var(--text);font-family:var(--font-main);font-size:15px;
+  }
+  .field input:focus{outline:2px solid var(--amber);outline-offset:-1px}
+  .cat-suggest{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .cat-suggest button{
+    border:1px solid var(--border);background:var(--bg);color:var(--muted);
+    border-radius:99px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:var(--font-main);
+  }
+  .cat-suggest button:hover{color:var(--text);border-color:var(--muted)}
+  .swatches{display:flex;gap:10px;flex-wrap:wrap}
+  .swatch{
+    width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;
+    transition:transform .12s;
+  }
+  .swatch:hover{transform:scale(1.12)}
+  .swatch.sel{border-color:var(--text)}
+  .swatch:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+  .modal-actions{display:flex;gap:10px;margin-top:22px}
+  .modal-actions .btn{flex:1}
+  .form-err{color:var(--danger);font-size:13px;margin-top:10px;display:none}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    padding:11px 20px;border-radius:12px;font-size:14px;opacity:0;
+    transition:transform .25s,opacity .25s;z-index:60;pointer-events:none;
+    max-width:90vw;text-align:center;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  @media (min-width:560px){
+    .overlay{align-items:center;padding:20px}
+    .modal{border-radius:20px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="status-line"><span class="led"></span><span id="count-label">0 links · monitoring</span></div>
+    <div><h1 id="title" contenteditable="true" spellcheck="false">ศูนย์มอนิเตอร์ของฉัน</h1></div>
+    <div><span class="subtitle" id="subtitle" contenteditable="true" spellcheck="false">รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว</span></div>
+    <div class="hint">แตะที่ชื่อหรือคำอธิบายเพื่อแก้ไขได้เลย</div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search" id="search" type="search" placeholder="ค้นหาลิงก์…" aria-label="ค้นหาลิงก์">
+    <button class="btn" id="manage-btn">จัดการ</button>
+    <button class="btn btn-amber" id="add-btn">+ เพิ่มลิงก์</button>
+  </div>
+
+  <div class="chips" id="chips"></div>
+
+  <div id="groups"></div>
+
+  <div class="empty" id="empty" hidden>
+    <p>ยังไม่มีลิงก์ในบอร์ดนี้<br>เริ่มเพิ่มลิงก์แรกเพื่อรวมทุกอย่างไว้ที่เดียว</p>
+    <button class="btn btn-amber" id="empty-add">+ เพิ่มลิงก์แรก</button>
+  </div>
+
+  <footer>
+    <button id="export-btn">⬇ สำรองข้อมูล (JSON)</button>
+    <button id="import-btn">⬆ นำเข้าข้อมูล</button>
+    <input type="file" id="import-file" accept="application/json" hidden>
+  </footer>
+</div>
+
+<!-- modal -->
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 id="modal-title">เพิ่มลิงก์</h2>
+    <div class="field">
+      <label for="f-name">ชื่อปุ่ม</label>
+      <input id="f-name" type="text" placeholder="เช่น แดชบอร์ดยอดขาย" maxlength="60">
+    </div>
+    <div class="field">
+      <label for="f-url">URL</label>
+      <input id="f-url" type="url" placeholder="https://…" inputmode="url">
+    </div>
+    <div class="field">
+      <label for="f-cat">หมวดหมู่ (พิมพ์ชื่อใหม่เพื่อสร้างหมวด)</label>
+      <input id="f-cat" type="text" placeholder="เช่น งาน, เซิร์ฟเวอร์, การเงิน" maxlength="30" list="cat-list">
+      <datalist id="cat-list"></datalist>
+      <div class="cat-suggest" id="cat-suggest"></div>
+    </div>
+    <div class="field">
+      <label for="f-note">คำอธิบาย (ไม่บังคับ)</label>
+      <input id="f-note" type="text" placeholder="เช่น เช็กทุกเช้า 9 โมง" maxlength="80">
+    </div>
+    <div class="field">
+      <label>สีประจำปุ่ม</label>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="form-err" id="form-err"></div>
+    <div class="modal-actions">
+      <button class="btn" id="cancel-btn">ยกเลิก</button>
+      <button class="btn btn-amber" id="save-btn">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  const COLORS = ['#FFB454','#4FD1C5','#60A5FA','#A78BFA','#F87171','#A3E635','#F472B6','#94A3B8'];
+  const KEY = 'linkhub-data-v2';
+  const UNCAT = '';
+
+  let state = {
+    title: 'ศูนย์มอนิเตอร์ของฉัน',
+    subtitle: 'รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว',
+    links: []   // {id, name, url, note, color, cat}
+  };
+  let manageMode = false;
+  let editingId = null;
+  let selectedColor = COLORS[0];
+  let activeFilter = null; // null = ทั้งหมด
+  let storageOk = true;
+
+  const $ = id => document.getElementById(id);
+  const groupsEl=$('groups'), emptyEl=$('empty'), overlay=$('overlay'),
+        searchEl=$('search'), toastEl=$('toast'), chipsEl=$('chips');
+
+  /* ---------- storage (localStorage) ---------- */
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){
+        const d = JSON.parse(raw);
+        if(d && Array.isArray(d.links)) state = Object.assign(state, d);
+      }
+    }catch(e){ storageOk = false; }
+  }
+  function save(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }catch(e){
+      if(storageOk){ storageOk=false; toast('บันทึกไม่สำเร็จ — พื้นที่เก็บข้อมูลของเบราว์เซอร์อาจเต็มหรือถูกปิดใช้งาน'); }
+    }
+  }
+
+  /* ---------- helpers ---------- */
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), 2600);
+  }
+  function domain(url){
+    try{ return new URL(url).hostname.replace(/^www\./,''); }catch(e){ return url; }
+  }
+  function normalizeUrl(u){
+    u = u.trim();
+    if(!u) return '';
+    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    try{ new URL(u); return u; }catch(e){ return ''; }
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function categories(){
+    const seen = [];
+    state.links.forEach(l=>{
+      const c = (l.cat||'').trim();
+      if(c && !seen.includes(c)) seen.push(c);
+    });
+    return seen;
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    const q = searchEl.value.trim().toLowerCase();
+    const cats = categories();
+
+    // filter chips
+    chipsEl.innerHTML = '';
+    if(cats.length > 0){
+      const mk = (label, val)=>{
+        const b = document.createElement('button');
+        b.className = 'chip' + ((activeFilter===val)?' sel':'');
+        b.textContent = label;
+        b.onclick = ()=>{ activeFilter = (activeFilter===val)? null : val; render(); };
+        chipsEl.appendChild(b);
+      };
+      mk('ทั้งหมด', null);
+      cats.forEach(c=>mk(c, c));
+      if(state.links.some(l=>!(l.cat||'').trim())) mk('ยังไม่จัดหมวด', UNCAT);
+    }
+    if(activeFilter !== null && activeFilter !== UNCAT && !cats.includes(activeFilter)) activeFilter = null;
+
+    const match = l =>
+      (!q || l.name.toLowerCase().includes(q) || (l.note||'').toLowerCase().includes(q)
+        || l.url.toLowerCase().includes(q) || (l.cat||'').toLowerCase().includes(q))
+      && (activeFilter===null || (activeFilter===UNCAT ? !(l.cat||'').trim() : (l.cat||'').trim()===activeFilter));
+
+    const items = state.links.filter(match);
+
+    $('count-label').textContent = state.links.length + ' links · ' + cats.length + ' groups';
+    $('title').textContent = state.title;
+    $('subtitle').textContent = state.subtitle;
+    emptyEl.hidden = state.links.length !== 0;
+    document.body.classList.toggle('manage-mode', manageMode);
+
+    // group items
+    const order = [];
+    const map = {};
+    items.forEach(l=>{
+      const c = (l.cat||'').trim();
+      if(!(c in map)){ map[c]=[]; order.push(c); }
+      map[c].push(l);
+    });
+    // จัดหมวดตามลำดับที่พบ แต่ให้ "ยังไม่จัดหมวด" อยู่ท้ายสุด
+    order.sort((a,b)=> (a===''?1:0)-(b===''?1:0));
+
+    groupsEl.innerHTML = '';
+    order.forEach(cat=>{
+      const g = document.createElement('div');
+      g.className = 'group';
+      g.dataset.cat = cat;
+      const showHead = cat !== '' || order.length > 1;
+      if(showHead){
+        const head = document.createElement('div');
+        head.className = 'group-head';
+        const nameEl = document.createElement('span');
+        nameEl.className = 'group-name';
+        nameEl.textContent = cat === '' ? 'ยังไม่จัดหมวด' : cat;
+        if(manageMode && cat !== ''){
+          nameEl.contentEditable = 'true';
+          nameEl.spellcheck = false;
+          nameEl.title = 'พิมพ์เพื่อเปลี่ยนชื่อหมวด';
+          nameEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); nameEl.blur(); } });
+          nameEl.addEventListener('blur', ()=>{
+            const nv = nameEl.textContent.trim();
+            if(nv && nv !== cat){
+              state.links.forEach(l=>{ if((l.cat||'').trim()===cat) l.cat = nv; });
+              if(activeFilter===cat) activeFilter = nv;
+              toast('เปลี่ยนชื่อหมวดเป็น "'+nv+'" แล้ว');
+              save();
+            }
+            render();
+          });
+        }
+        head.appendChild(nameEl);
+        const line = document.createElement('div'); line.className='group-line';
+        head.appendChild(line);
+        const cnt = document.createElement('span'); cnt.className='group-count';
+        cnt.textContent = map[cat].length;
+        head.appendChild(cnt);
+        g.appendChild(head);
+      }
+
+      const list = document.createElement('div');
+      list.className = 'list';
+      map[cat].forEach(l=>{
+        const a = document.createElement('a');
+        a.className = 'card';
+        a.href = l.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.dataset.id = l.id;
+        a.style.setProperty('--c', l.color);
+        a.innerHTML =
+          '<span class="drag-handle" title="ลากเพื่อจัดลำดับหรือย้ายหมวด" aria-hidden="true">⠿</span>'+
+          '<div class="card-top"><span class="dot"></span><span class="card-name">'+esc(l.name)+'</span></div>'+
+          (l.note ? '<div class="card-note">'+esc(l.note)+'</div>' : '')+
+          '<div class="card-domain">'+esc(domain(l.url))+'</div>'+
+          '<div class="controls">'+
+            '<button class="icon-btn" data-act="up" data-id="'+l.id+'" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>'+
+            '<button class="icon-btn" data-act="down" data-id="'+l.id+'" title="เลื่อนลง" aria-label="เลื่อนลง">↓</button>'+
+            '<button class="icon-btn" data-act="edit" data-id="'+l.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>'+
+            '<button class="icon-btn del" data-act="del" data-id="'+l.id+'" title="ลบ" aria-label="ลบ">✕</button>'+
+          '</div>';
+        list.appendChild(a);
+      });
+      g.appendChild(list);
+      groupsEl.appendChild(g);
+    });
+
+    if(items.length===0 && state.links.length>0){
+      groupsEl.innerHTML = '<div class="empty"><p>ไม่พบลิงก์ที่ตรงกับเงื่อนไข</p></div>';
+    }
+  }
+
+  /* ---------- modal ---------- */
+  function buildSwatches(){
+    const box = $('swatches');
+    box.innerHTML = '';
+    COLORS.forEach(c=>{
+      const b = document.createElement('button');
+      b.type='button';
+      b.className = 'swatch' + (c===selectedColor?' sel':'');
+      b.style.background = c;
+      b.setAttribute('aria-label','สี '+c);
+      b.onclick = ()=>{ selectedColor=c; buildSwatches(); };
+      box.appendChild(b);
+    });
+  }
+  function buildCatSuggest(){
+    const cats = categories();
+    const dl = $('cat-list');
+    dl.innerHTML = cats.map(c=>'<option value="'+esc(c)+'">').join('');
+    const box = $('cat-suggest');
+    box.innerHTML = '';
+    cats.forEach(c=>{
+      const b = document.createElement('button');
+      b.type='button';
+      b.textContent = c;
+      b.onclick = ()=>{ $('f-cat').value = c; };
+      box.appendChild(b);
+    });
+  }
+  function openModal(link){
+    editingId = link ? link.id : null;
+    $('modal-title').textContent = link ? 'แก้ไขลิงก์' : 'เพิ่มลิงก์';
+    $('f-name').value = link ? link.name : '';
+    $('f-url').value  = link ? link.url  : '';
+    $('f-note').value = link ? (link.note||'') : '';
+    $('f-cat').value  = link ? (link.cat||'') : (activeFilter && activeFilter!==UNCAT ? activeFilter : '');
+    selectedColor = link ? link.color : COLORS[state.links.length % COLORS.length];
+    $('form-err').style.display='none';
+    buildSwatches();
+    buildCatSuggest();
+    overlay.classList.add('open');
+    setTimeout(()=>$('f-name').focus(), 60);
+  }
+  function closeModal(){ overlay.classList.remove('open'); }
+
+  function submit(){
+    const name = $('f-name').value.trim();
+    const url  = normalizeUrl($('f-url').value);
+    const note = $('f-note').value.trim();
+    const cat  = $('f-cat').value.trim();
+    const err = $('form-err');
+    if(!name){ err.textContent='กรุณาใส่ชื่อปุ่ม'; err.style.display='block'; return; }
+    if(!url){ err.textContent='URL ไม่ถูกต้อง — ลองใส่ในรูปแบบ https://example.com'; err.style.display='block'; return; }
+
+    if(editingId){
+      const l = state.links.find(x=>x.id===editingId);
+      if(l){ l.name=name; l.url=url; l.note=note; l.cat=cat; l.color=selectedColor; }
+      toast('แก้ไขลิงก์แล้ว');
+    }else{
+      state.links.push({ id:'l'+Date.now()+Math.floor(Math.random()*1000), name, url, note, cat, color:selectedColor });
+      toast('เพิ่ม "'+name+'" แล้ว');
+    }
+    closeModal();
+    render();
+    save();
+  }
+
+  /* ---------- events ---------- */
+  $('add-btn').onclick   = ()=>openModal(null);
+  $('empty-add').onclick = ()=>openModal(null);
+  $('cancel-btn').onclick= closeModal;
+  $('save-btn').onclick  = submit;
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape' && overlay.classList.contains('open')) closeModal();
+    if(e.key==='Enter' && overlay.classList.contains('open') && e.target.tagName==='INPUT') submit();
+  });
+
+  $('manage-btn').onclick = function(){
+    manageMode = !manageMode;
+    this.classList.toggle('active', manageMode);
+    this.textContent = manageMode ? 'เสร็จสิ้น' : 'จัดการ';
+    render();
+    if(manageMode) toast('ลากที่ ⠿ เพื่อจัดลำดับ หรือย้ายไปหมวดอื่นได้เลย');
+  };
+
+  searchEl.addEventListener('input', render);
+
+  groupsEl.addEventListener('click', e=>{
+    if(e.target.closest('.drag-handle')){ e.preventDefault(); return; }
+    const btn = e.target.closest('[data-act]');
+    if(!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    const id = btn.dataset.id;
+    const i = state.links.findIndex(l=>l.id===id);
+    if(i<0) return;
+    const act = btn.dataset.act;
+    const cat = (state.links[i].cat||'').trim();
+    if(act==='del'){
+      const name = state.links[i].name;
+      state.links.splice(i,1);
+      toast('ลบ "'+name+'" แล้ว');
+    }else if(act==='up' || act==='down'){
+      // สลับตำแหน่งกับลิงก์ข้างเคียง "ในหมวดเดียวกัน"
+      const dir = act==='up' ? -1 : 1;
+      let j = i + dir;
+      while(j>=0 && j<state.links.length && (state.links[j].cat||'').trim()!==cat) j += dir;
+      if(j>=0 && j<state.links.length){
+        [state.links[i],state.links[j]] = [state.links[j],state.links[i]];
+      }
+    }else if(act==='edit'){
+      openModal(state.links[i]);
+      return;
+    }
+    render();
+    save();
+  });
+
+  /* ---------- drag & drop (เมาส์ + สัมผัส ผ่าน Pointer Events) ---------- */
+  let drag = null;
+
+  groupsEl.addEventListener('pointerdown', e=>{
+    const handle = e.target.closest('.drag-handle');
+    if(!handle || drag) return;
+    const card = handle.closest('.card');
+    if(!card) return;
+    e.preventDefault();
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true);
+    ghost.classList.add('ghost');
+    ghost.classList.remove('drag-src');
+    ghost.style.width = rect.width+'px';
+    ghost.style.left = rect.left+'px';
+    ghost.style.top = rect.top+'px';
+    document.body.appendChild(ghost);
+    card.classList.add('drag-src');
+    document.body.classList.add('is-dragging');
+    drag = { card, ghost, dx:e.clientX-rect.left, dy:e.clientY-rect.top, y:e.clientY, raf:0 };
+    try{ handle.setPointerCapture(e.pointerId); }catch(err){}
+    autoScrollLoop();
+  });
+
+  function autoScrollLoop(){
+    if(!drag) return;
+    const m = 80, s = 13;
+    if(drag.y < m) window.scrollBy(0,-s);
+    else if(drag.y > window.innerHeight - m) window.scrollBy(0,s);
+    drag.raf = requestAnimationFrame(autoScrollLoop);
+  }
+
+  document.addEventListener('pointermove', e=>{
+    if(!drag) return;
+    e.preventDefault();
+    drag.y = e.clientY;
+    drag.ghost.style.left = (e.clientX-drag.dx)+'px';
+    drag.ghost.style.top  = (e.clientY-drag.dy)+'px';
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if(!el) return;
+    const over = el.closest('.card');
+    if(over && over !== drag.card && !over.classList.contains('ghost')){
+      const r = over.getBoundingClientRect();
+      const before = e.clientY < r.top + r.height/2;
+      over.parentNode.insertBefore(drag.card, before ? over : over.nextSibling);
+    }else{
+      const grp = el.closest('.group');
+      if(grp){
+        const list = grp.querySelector('.list');
+        if(list && !list.contains(drag.card)) list.appendChild(drag.card);
+      }
+    }
+  }, {passive:false});
+
+  function finishDrag(){
+    if(!drag) return;
+    cancelAnimationFrame(drag.raf);
+    drag.ghost.remove();
+    drag.card.classList.remove('drag-src');
+    document.body.classList.remove('is-dragging');
+    drag = null;
+    commitDomOrder();
+  }
+  document.addEventListener('pointerup', finishDrag);
+  document.addEventListener('pointercancel', finishDrag);
+
+  /* อ่านลำดับใหม่จากหน้าจอ แล้วอัปเดตข้อมูลจริง
+     (ลิงก์ที่ถูกกรองซ่อนอยู่ จะคงตำแหน่งเดิมของมันไว้) */
+  function commitDomOrder(){
+    const entries = [];
+    groupsEl.querySelectorAll('.group').forEach(g=>{
+      const cat = g.dataset.cat || '';
+      g.querySelectorAll('.card[data-id]').forEach(c=>entries.push({ id:c.dataset.id, cat }));
+    });
+    const visSet = new Set(entries.map(en=>en.id));
+    const idxs = [];
+    state.links.forEach((l,i)=>{ if(visSet.has(l.id)) idxs.push(i); });
+    if(idxs.length !== entries.length){ render(); return; }
+    const byId = {};
+    state.links.forEach(l=>{ byId[l.id]=l; });
+    const placed = entries.map(en=>{
+      const l = byId[en.id];
+      if(l) l.cat = en.cat;
+      return l;
+    });
+    placed.forEach((l,k)=>{ if(l) state.links[idxs[k]] = l; });
+    render();
+    save();
+  }
+
+  /* editable header */
+  ['title','subtitle'].forEach(id=>{
+    const el = $(id);
+    el.addEventListener('blur', ()=>{
+      const v = el.textContent.trim();
+      if(v){ state[id]=v; save(); }
+      else render();
+    });
+    el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+  });
+
+  /* ---------- export / import ---------- */
+  $('export-btn').onclick = ()=>{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'linkhub-backup.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('ดาวน์โหลดไฟล์สำรองแล้ว');
+  };
+  $('import-btn').onclick = ()=>$('import-file').click();
+  $('import-file').addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const d = JSON.parse(reader.result);
+        if(!d || !Array.isArray(d.links)) throw new Error('bad format');
+        state = Object.assign({title:state.title, subtitle:state.subtitle, links:[]}, d);
+        render();
+        save();
+        toast('นำเข้าข้อมูล '+state.links.length+' ลิงก์แล้ว');
+      }catch(err){
+        toast('ไฟล์ไม่ถูกต้อง — ต้องเป็นไฟล์สำรองจากหน้านี้เท่านั้น');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  /* ---------- init ---------- */
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
