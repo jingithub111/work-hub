@@ -4,12 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Work Hub — ศูนย์รวมลิงก์มอนิเตอร์</title>
-<meta name="theme-color" content="#EDF1F7">
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --bg:#EDF1F7;
@@ -18,8 +14,8 @@
     --border:#E3E9F2;
     --text:#1F2633;
     --muted:#8B95A6;
-    --accent:#0F6A4F;
-    --accent-soft:#E2F0E9;
+    --accent:#4C7DF7;
+    --accent-soft:#E4EBFE;
     --danger:#F16A6A;
     --radius:18px;
     --shadow:0 2px 10px rgba(30,50,90,.06);
@@ -48,68 +44,10 @@
     box-shadow:0 0 0 4px var(--accent-soft);animation:pulse 2.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   @media (prefers-reduced-motion:reduce){.led{animation:none}}
-  h1{font-size:27px;font-weight:700;letter-spacing:-.01em;padding:2px 10px;display:inline-block}
-  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;padding:2px 10px;display:inline-block}
-  .logo{width:200px;max-width:66%;display:block;margin:0 auto 10px}
-  .sync-badge{
-    display:inline-block;font-size:11px;font-weight:500;margin-top:8px;
-    color:#AEB7C6;background:var(--surface);border:1px solid var(--border);
-    border-radius:99px;padding:3px 12px;
-  }
-  .sync-badge:empty{display:none}
-  .sync-badge.ok{color:#2FA35C;border-color:#BFE6CD;background:#EDFAF2}
-  .sync-badge.err{color:#D25555;border-color:#F2C9C9;background:#FDF1F1}
-
-  /* QR button (ท้ายการ์ด) */
-  .qr-btn{
-    position:absolute;right:14px;top:50%;transform:translateY(-50%);
-    width:38px;height:38px;border-radius:11px;border:1px solid var(--border);
-    background:var(--surface-2);color:var(--muted);cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:color .15s,border-color .15s,background .15s;
-  }
-  .qr-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
-  .qr-btn:focus-visible{outline:2px solid var(--accent)}
-  .qr-btn svg{width:19px;height:19px}
-  .manage-mode .qr-btn{display:none}
-
-  /* QR modal */
-  .qr-modal{max-width:340px;text-align:center}
-  .qr-title{font-size:17px;font-weight:600;margin-bottom:2px;word-break:break-word}
-  .qr-sub{font-size:12px;color:#AEB7C6;margin-bottom:18px;word-break:break-all}
-  .qr-box{
-    display:flex;align-items:center;justify-content:center;
-    background:#fff;border:1px solid var(--border);border-radius:16px;
-    padding:18px;margin:0 auto 18px;width:fit-content;
-  }
-  .qr-box img,.qr-box canvas{display:block}
-  .qr-fail{font-size:13px;color:var(--muted);padding:20px;max-width:240px;word-break:break-all}
-
-  /* ปุ่มเลื่อนหมวดในหัวกลุ่ม (โหมดจัดการ) */
-  .group-move{display:none;gap:5px}
-  .manage-mode .group-move{display:flex}
-  .group-move .icon-btn{width:27px;height:27px;font-size:12px;border-radius:8px}
-
-  /* ---------- business tabs ---------- */
-  .biz-bar{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin-bottom:6px;
-    -webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .biz-bar::-webkit-scrollbar{display:none}
-  .biz-tab{
-    display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);
-    background:var(--surface);color:var(--muted);border-radius:14px;padding:9px 15px;
-    font-family:var(--font-main);font-size:14px;font-weight:600;cursor:pointer;
-    white-space:nowrap;box-shadow:var(--shadow);transition:all .15s;flex-shrink:0;
-  }
-  .biz-tab:hover{color:var(--text)}
-  .biz-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .biz-tab.sel{background:var(--accent);border-color:var(--accent);color:#fff}
-  .biz-tab.add{border-style:dashed;background:transparent;box-shadow:none;color:#AEB7C6}
-  .biz-tab.add:hover{color:var(--accent);border-color:var(--accent)}
-  .biz-n{font-size:11px;background:rgba(30,50,90,.07);border-radius:99px;padding:1px 8px;font-weight:600}
-  .biz-tab.sel .biz-n{background:rgba(255,255,255,.25)}
-  .biz-act{font-size:12px;opacity:.9;padding:2px 5px;border-radius:6px;cursor:pointer}
-  .biz-tab.sel .biz-act:hover{background:rgba(255,255,255,.22)}
-  .biz-tab.sel .biz-act.del:hover{background:rgba(255,120,120,.4)}
+  h1{font-size:27px;font-weight:700;letter-spacing:-.01em;cursor:text;border-radius:10px;padding:2px 10px;display:inline-block}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;cursor:text;border-radius:10px;padding:2px 10px;display:inline-block}
+  h1:focus,.subtitle:focus{outline:2px solid var(--accent);outline-offset:2px;background:var(--surface)}
+  .hint{font-size:11px;color:#AEB7C6;margin-top:10px}
 
   /* ---------- toolbar ---------- */
   .toolbar{display:flex;gap:10px;margin-bottom:14px}
@@ -129,7 +67,7 @@
   .btn:hover{background:var(--surface-2)}
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .btn-amber{background:var(--accent);border-color:var(--accent);color:#fff}
-  .btn-amber:hover{background:#0C5940}
+  .btn-amber:hover{background:#3D6EEB}
   .btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 
   /* ---------- filter chips ---------- */
@@ -179,8 +117,6 @@
   .controls{display:none;position:absolute;top:12px;right:12px;gap:6px}
   .manage-mode .controls{display:flex}
   .manage-mode .card{padding-right:158px}
-  .card{padding-right:62px}
-  .manage-mode .card{padding-right:158px !important}
   .icon-btn{
     width:32px;height:32px;border-radius:10px;border:1px solid var(--border);
     background:var(--surface-2);color:var(--muted);cursor:pointer;font-size:14px;
@@ -210,12 +146,21 @@
   .is-dragging .card{transition:none}
   .is-dragging .card:hover{transform:none}
 
+  /* ---------- empty / footer ---------- */
   .empty{
     text-align:center;padding:52px 20px;border:2px dashed #D6DEEA;
     border-radius:var(--radius);color:var(--muted);background:rgba(255,255,255,.5);
   }
   .empty p{font-size:14px;line-height:1.7}
   .empty .btn{margin-top:16px}
+  footer{
+    margin-top:36px;display:flex;justify-content:center;gap:18px;
+  }
+  footer button{
+    background:none;border:none;color:#AEB7C6;font-family:var(--font-main);
+    font-size:12px;cursor:pointer;padding:4px;
+  }
+  footer button:hover{color:var(--muted);text-decoration:underline}
 
   /* ---------- modal ---------- */
   .overlay{
@@ -236,11 +181,6 @@
     padding:12px 15px;color:var(--text);font-family:var(--font-main);font-size:15px;
   }
   .field input:focus{outline:2px solid var(--accent);outline-offset:-1px;background:#fff}
-  .field select{
-    width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:13px;
-    padding:12px 15px;color:var(--text);font-family:var(--font-main);font-size:15px;
-  }
-  .field select:focus{outline:2px solid var(--accent);outline-offset:-1px;background:#fff}
   .cat-suggest{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
   .cat-suggest button{
     border:1px solid var(--border);background:var(--surface-2);color:var(--muted);
@@ -258,6 +198,9 @@
   .modal-actions{display:flex;gap:10px;margin-top:22px}
   .modal-actions .btn{flex:1}
   .form-err{color:var(--danger);font-size:13px;margin-top:10px;display:none}
+  .sync-help{font-size:12px;line-height:1.65;color:var(--muted);margin:-5px 0 16px}
+  .sync-status{font-size:12px;line-height:1.5;margin:2px 0 14px;color:var(--muted)}
+  .sync-status.ok{color:#16816f}.sync-status.err{color:var(--danger)}
 
   .toast{
     position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
@@ -277,14 +220,11 @@
 <body>
 <div class="wrap">
   <header>
-    <img src="logo.png" alt="JERO Design Thinking" class="logo">
     <div class="status-line"><span class="led"></span><span id="count-label">0 links · monitoring</span></div>
-    <div><h1 id="title">Work Hub</h1></div>
-    <div><span class="subtitle" id="subtitle">รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว</span></div>
-    <div><span class="sync-badge" id="sync-badge" aria-live="polite"></span></div>
+    <div><h1 id="title" contenteditable="true" spellcheck="false">Work Hub</h1></div>
+    <div><span class="subtitle" id="subtitle" contenteditable="true" spellcheck="false">รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว</span></div>
+    <div class="hint">แตะที่ชื่อหรือคำอธิบายเพื่อแก้ไขได้เลย</div>
   </header>
-
-  <div class="biz-bar" id="biz-bar" aria-label="เลือกธุรกิจ"></div>
 
   <div class="toolbar">
     <input class="search" id="search" type="search" placeholder="ค้นหาลิงก์…" aria-label="ค้นหาลิงก์">
@@ -300,18 +240,28 @@
     <p>ยังไม่มีลิงก์ในบอร์ดนี้<br>เริ่มเพิ่มลิงก์แรกเพื่อรวมทุกอย่างไว้ที่เดียว</p>
     <button class="btn btn-amber" id="empty-add">+ เพิ่มลิงก์แรก</button>
   </div>
+
+  <footer>
+    <button id="sync-btn">☁ ตั้งค่าซิงก์</button>
+    <button id="export-btn">⬇ สำรองข้อมูล (JSON)</button>
+    <button id="import-btn">⬆ นำเข้าข้อมูล</button>
+    <input type="file" id="import-file" accept="application/json" hidden>
+  </footer>
 </div>
 
-<!-- qr modal -->
-<div class="overlay" id="qr-overlay">
-  <div class="modal qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-name">
-    <div class="qr-title" id="qr-name"></div>
-    <div class="qr-sub" id="qr-url"></div>
-    <div class="qr-box" id="qr-box"></div>
+<!-- sync settings modal -->
+<div class="overlay" id="sync-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sync-modal-title">
+    <h2 id="sync-modal-title">ซิงก์กับ Google Sheet</h2>
+    <p class="sync-help">วาง URL ของ Google Apps Script และรหัสลับของคุณ ข้อมูลจะยังบันทึกในเครื่องทันที แล้วอัปโหลดขึ้น Sheet เบื้องหลัง</p>
+    <div class="field"><label for="sync-url">Web app URL</label><input id="sync-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" inputmode="url"></div>
+    <div class="field"><label for="sync-token">รหัสลับ (token)</label><input id="sync-token" type="password" placeholder="รหัสเดียวกับใน Apps Script" autocomplete="off"></div>
+    <p class="sync-status" id="sync-status" aria-live="polite">ยังไม่ได้ตั้งค่าซิงก์</p>
     <div class="modal-actions">
-      <button class="btn" id="qr-copy-btn">คัดลอกลิงก์</button>
-      <button class="btn" id="qr-dl-btn">บันทึกรูป</button>
-      <button class="btn btn-amber" id="qr-close-btn">ปิด</button>
+      <button class="btn" id="sync-cancel-btn">ยกเลิก</button>
+      <button class="btn" id="sync-test-btn">ทดสอบและดึงข้อมูล</button>
+      <button class="btn" id="sync-push-btn">อัปโหลดข้อมูลเครื่อง</button>
+      <button class="btn btn-amber" id="sync-save-btn">บันทึกการตั้งค่า</button>
     </div>
   </div>
 </div>
@@ -327,10 +277,6 @@
     <div class="field">
       <label for="f-url">URL</label>
       <input id="f-url" type="url" placeholder="https://…" inputmode="url">
-    </div>
-    <div class="field">
-      <label for="f-biz">ธุรกิจ / งาน</label>
-      <select id="f-biz"></select>
     </div>
     <div class="field">
       <label for="f-cat">หมวดหมู่ (พิมพ์ชื่อใหม่เพื่อสร้างหมวด)</label>
@@ -354,60 +300,21 @@
   </div>
 </div>
 
-<!-- biz modal -->
-<div class="overlay" id="biz-overlay">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="biz-modal-title">
-    <h2 id="biz-modal-title">เพิ่มธุรกิจ</h2>
-    <div class="field">
-      <label for="f-biz-name">ชื่อธุรกิจ / งาน</label>
-      <input id="f-biz-name" type="text" placeholder="เช่น ร้านเบเกอรี่, งานกราฟิก" maxlength="30">
-    </div>
-    <div class="form-err" id="biz-err"></div>
-    <div class="modal-actions">
-      <button class="btn" id="biz-cancel-btn">ยกเลิก</button>
-      <button class="btn btn-amber" id="biz-save-btn">บันทึก</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 (function(){
   'use strict';
-  const COLORS = ['#0F6A4F','#C9A468','#4C7DF7','#22B8A8','#F59E4C','#8B5CF6','#F16A85','#94A3B8'];
+  const COLORS = ['#4C7DF7','#22B8A8','#F59E4C','#8B5CF6','#F16A85','#58BE5B','#38A8E8','#94A3B8'];
   const KEY = 'linkhub-data-v2';
   const SYNC_KEY = 'linkhub-sync-v1';
   const UNCAT = '';
 
-  // ============================================================
-  // *** ตั้งค่าซิงก์ Google Sheet ตรงนี้ (แก้ 2 บรรทัดล่างนี้) ***
-  // SYNC_URL  = Web app URL จาก Apps Script (ลงท้าย /exec)
-  // SYNC_TOKEN = รหัสลับ ต้องตรงกับ SYNC_TOKEN ในสคริปต์
-  // ============================================================
-  const SYNC_URL   = 'https://script.google.com/macros/s/AKfycbwE3YIDae0I0mvwo_G45qCsORC4T19jv9lAjuzDl4jWdtp-D6LkCzpyypq_ZhpooIs0/exec';
-  const SYNC_TOKEN = 'workhub-7xK9mQ2pL8vR4aN6';
-
   let state = {
     title: 'Work Hub',
     subtitle: 'รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว',
-    bizs: ['ธุรกิจของฉัน'],
-    activeBiz: 'ธุรกิจของฉัน',
-    links: []   // {id, name, url, note, color, cat, biz}
+    links: []   // {id, name, url, note, color, cat}
   };
-
-  /* จัดข้อมูลให้เข้าระบบธุรกิจเสมอ (ข้อมูลเก่า/จาก Sheet ไม่หาย) */
-  function migrate(){
-    if(!Array.isArray(state.bizs)) state.bizs = [];
-    state.bizs = state.bizs.map(b=>String(b).trim()).filter(Boolean);
-    if(state.bizs.length===0) state.bizs = ['ธุรกิจของฉัน'];
-    state.links.forEach(l=>{
-      const b = (l.biz||'').trim();
-      if(!b) l.biz = state.bizs[0];
-      else if(!state.bizs.includes(b)) state.bizs.push(b);
-    });
-    if(!state.bizs.includes(state.activeBiz)) state.activeBiz = state.bizs[0];
-  }
   let manageMode = false;
   let editingId = null;
   let selectedColor = COLORS[0];
@@ -434,10 +341,6 @@
       const savedSync = localStorage.getItem(SYNC_KEY);
       if(savedSync) syncConfig = Object.assign(syncConfig, JSON.parse(savedSync));
     }catch(e){ storageOk = false; }
-    // ค่าที่ฝังในไฟล์มาก่อนเสมอ — เครื่องใหม่ก็ซิงก์ได้ทันทีไม่ต้องตั้งค่า
-    if(SYNC_URL) syncConfig.url = SYNC_URL;
-    if(SYNC_TOKEN) syncConfig.token = SYNC_TOKEN;
-    migrate();
   }
   function save(){
     try{
@@ -451,10 +354,9 @@
   /* ---------- Google Sheet sync ---------- */
   function saveSyncConfig(){ localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig)); }
   function syncStatus(message, kind){
-    const el = $('sync-badge');
-    if(!el) return;
-    el.textContent = message ? '☁ ' + message : '';
-    el.className = 'sync-badge' + (kind ? ' '+kind : '');
+    const el = $('sync-status');
+    el.textContent = message;
+    el.className = 'sync-status' + (kind ? ' '+kind : '');
   }
   async function syncRequest(action, payload){
     if(!syncConfig.url || !syncConfig.token) throw new Error('missing configuration');
@@ -507,23 +409,19 @@
       const result = await syncRequest('get');
       if(result.data && Array.isArray(result.data.links)){
         applyingRemote = true;
-        const prevActive = state.activeBiz;
-        state = Object.assign({title:'Work Hub', subtitle:'', bizs:[], activeBiz:'', links:[]}, result.data);
-        migrate();
-        if(state.bizs.includes(prevActive)) state.activeBiz = prevActive;
+        state = Object.assign({title:'Work Hub', subtitle:'', links:[]}, result.data);
         localStorage.setItem(KEY, JSON.stringify(state));
         applyingRemote = false;
         render();
         syncConfig.lastSyncedAt = Date.now(); saveSyncConfig();
-        syncStatus('ซิงก์กับ Google Sheet แล้ว', 'ok');
+        if(interactive) syncStatus('ดึงข้อมูลจาก Sheet สำเร็จ', 'ok');
         return 'remote';
       }else{
-        syncStatus('Sheet ยังว่าง — จะอัปโหลดข้อมูลจากเครื่องนี้', 'ok');
+        if(interactive) syncStatus('Sheet ยังว่างอยู่ — จะอัปโหลดข้อมูลในเครื่อง', 'ok');
         return 'empty';
       }
     }catch(err){
-      syncStatus('เชื่อมต่อ Google Sheet ไม่ได้ — ใช้ข้อมูลในเครื่องไปก่อน', 'err');
-      console.warn('Work Hub sync:', err);
+      if(interactive) syncStatus('เชื่อมต่อไม่ได้: '+err.message, 'err'); else console.warn('Work Hub sync:', err);
       return 'error';
     }
   }
@@ -532,15 +430,12 @@
     if(syncInFlight){ syncPending = true; return; }
     syncInFlight = true;
     const sentRevision = stateRevision;
-    syncStatus('กำลังซิงก์ขึ้น Google Sheet…');
     try{
       await syncRequest('save', {data:JSON.stringify(state)});
       syncConfig.lastSyncedAt=Date.now(); saveSyncConfig();
-      syncStatus('ซิงก์กับ Google Sheet แล้ว', 'ok');
       setTimeout(()=>{ if(!syncInFlight) pullFromSheet(false); }, 1000);
       return true;
     }catch(err){
-      syncStatus('ซิงก์ไม่สำเร็จ — จะลองใหม่เมื่อบันทึกครั้งถัดไป', 'err');
       console.warn('Work Hub sync:', err);
       return false;
     }finally{
@@ -574,63 +469,16 @@
   function categories(){
     const seen = [];
     state.links.forEach(l=>{
-      if(l.biz !== state.activeBiz) return;
       const c = (l.cat||'').trim();
       if(c && !seen.includes(c)) seen.push(c);
     });
     return seen;
   }
 
-  /* ---------- business tabs ---------- */
-  function renderBizBar(){
-    const bizBar = $('biz-bar');
-    bizBar.innerHTML = '';
-    state.bizs.forEach(b=>{
-      const t = document.createElement('button');
-      t.className = 'biz-tab' + (b===state.activeBiz?' sel':'');
-      const nm = document.createElement('span'); nm.textContent = b; t.appendChild(nm);
-      const n = state.links.filter(l=>l.biz===b).length;
-      const cn = document.createElement('span'); cn.className='biz-n'; cn.textContent = n; t.appendChild(cn);
-      if(manageMode && b===state.activeBiz){
-        const e = document.createElement('span');
-        e.className='biz-act'; e.textContent='✎'; e.title='เปลี่ยนชื่อธุรกิจ';
-        e.onclick = ev=>{ ev.stopPropagation(); openBizModal('rename', b); };
-        t.appendChild(e);
-        if(state.bizs.length>1){
-          const x = document.createElement('span');
-          x.className='biz-act del'; x.textContent='✕'; x.title='ลบธุรกิจ';
-          x.onclick = ev=>{ ev.stopPropagation(); deleteBiz(b); };
-          t.appendChild(x);
-        }
-      }
-      t.onclick = ()=>{
-        if(state.activeBiz!==b){ state.activeBiz=b; activeFilter=null; render(); save(); }
-      };
-      bizBar.appendChild(t);
-    });
-    const add = document.createElement('button');
-    add.className = 'biz-tab add';
-    add.textContent = '+ ธุรกิจ';
-    add.onclick = ()=>openBizModal('add');
-    bizBar.appendChild(add);
-  }
-
-  function deleteBiz(b){
-    const n = state.links.filter(l=>l.biz===b).length;
-    if(n>0){ toast('ย้ายหรือลบลิงก์ในธุรกิจนี้ให้หมดก่อน (เหลือ '+n+' ลิงก์)'); return; }
-    state.bizs = state.bizs.filter(x=>x!==b);
-    if(state.activeBiz===b) state.activeBiz = state.bizs[0];
-    toast('ลบธุรกิจ "'+b+'" แล้ว');
-    render();
-    save();
-  }
-
   /* ---------- render ---------- */
   function render(){
-    renderBizBar();
     const q = searchEl.value.trim().toLowerCase();
     const cats = categories();
-    const bizLinks = state.links.filter(l=>l.biz===state.activeBiz);
 
     // filter chips
     chipsEl.innerHTML = '';
@@ -644,22 +492,21 @@
       };
       mk('ทั้งหมด', null);
       cats.forEach(c=>mk(c, c));
-      if(bizLinks.some(l=>!(l.cat||'').trim())) mk('ยังไม่จัดหมวด', UNCAT);
+      if(state.links.some(l=>!(l.cat||'').trim())) mk('ยังไม่จัดหมวด', UNCAT);
     }
     if(activeFilter !== null && activeFilter !== UNCAT && !cats.includes(activeFilter)) activeFilter = null;
 
     const match = l =>
-      l.biz===state.activeBiz
-      && (!q || l.name.toLowerCase().includes(q) || (l.note||'').toLowerCase().includes(q)
+      (!q || l.name.toLowerCase().includes(q) || (l.note||'').toLowerCase().includes(q)
         || l.url.toLowerCase().includes(q) || (l.cat||'').toLowerCase().includes(q))
       && (activeFilter===null || (activeFilter===UNCAT ? !(l.cat||'').trim() : (l.cat||'').trim()===activeFilter));
 
     const items = state.links.filter(match);
 
-    $('count-label').textContent = bizLinks.length + ' links · ' + cats.length + ' groups';
+    $('count-label').textContent = state.links.length + ' links · ' + cats.length + ' groups';
     $('title').textContent = state.title;
     $('subtitle').textContent = state.subtitle;
-    emptyEl.hidden = bizLinks.length !== 0;
+    emptyEl.hidden = state.links.length !== 0;
     document.body.classList.toggle('manage-mode', manageMode);
 
     // group items
@@ -670,7 +517,8 @@
       if(!(c in map)){ map[c]=[]; order.push(c); }
       map[c].push(l);
     });
-    // จัดหมวดตามลำดับที่พบในข้อมูล (เลื่อนหมวดได้ผ่านปุ่ม ↑↓ ที่หัวหมวด)
+    // จัดหมวดตามลำดับที่พบ แต่ให้ "ยังไม่จัดหมวด" อยู่ท้ายสุด
+    order.sort((a,b)=> (a===''?1:0)-(b===''?1:0));
 
     groupsEl.innerHTML = '';
     order.forEach(cat=>{
@@ -692,7 +540,7 @@
           nameEl.addEventListener('blur', ()=>{
             const nv = nameEl.textContent.trim();
             if(nv && nv !== cat){
-              state.links.forEach(l=>{ if(l.biz===state.activeBiz && (l.cat||'').trim()===cat) l.cat = nv; });
+              state.links.forEach(l=>{ if((l.cat||'').trim()===cat) l.cat = nv; });
               if(activeFilter===cat) activeFilter = nv;
               toast('เปลี่ยนชื่อหมวดเป็น "'+nv+'" แล้ว');
               save();
@@ -703,14 +551,6 @@
         head.appendChild(nameEl);
         const line = document.createElement('div'); line.className='group-line';
         head.appendChild(line);
-        if(manageMode){
-          const mv = document.createElement('div');
-          mv.className = 'group-move';
-          mv.innerHTML =
-            '<button class="icon-btn" data-catmove="up" data-cat="'+esc(cat)+'" title="เลื่อนหมวดขึ้น" aria-label="เลื่อนหมวดขึ้น">↑</button>'+
-            '<button class="icon-btn" data-catmove="down" data-cat="'+esc(cat)+'" title="เลื่อนหมวดลง" aria-label="เลื่อนหมวดลง">↓</button>';
-          head.appendChild(mv);
-        }
         const cnt = document.createElement('span'); cnt.className='group-count';
         cnt.textContent = map[cat].length;
         head.appendChild(cnt);
@@ -732,9 +572,6 @@
           '<div class="card-top"><span class="dot"></span><span class="card-name">'+esc(l.name)+'</span></div>'+
           (l.note ? '<div class="card-note">'+esc(l.note)+'</div>' : '')+
           '<div class="card-domain">'+esc(domain(l.url))+'</div>'+
-          '<button class="qr-btn" data-qr="'+l.id+'" title="แสดง QR Code" aria-label="แสดง QR Code ของ '+esc(l.name)+'">'+
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M20 20h1M17 17h4v4"/></svg>'+
-          '</button>'+
           '<div class="controls">'+
             '<button class="icon-btn" data-act="up" data-id="'+l.id+'" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>'+
             '<button class="icon-btn" data-act="down" data-id="'+l.id+'" title="เลื่อนลง" aria-label="เลื่อนลง">↓</button>'+
@@ -747,7 +584,7 @@
       groupsEl.appendChild(g);
     });
 
-    if(items.length===0 && bizLinks.length>0){
+    if(items.length===0 && state.links.length>0){
       groupsEl.innerHTML = '<div class="empty"><p>ไม่พบลิงก์ที่ตรงกับเงื่อนไข</p></div>';
     }
   }
@@ -787,9 +624,6 @@
     $('f-url').value  = link ? link.url  : '';
     $('f-note').value = link ? (link.note||'') : '';
     $('f-cat').value  = link ? (link.cat||'') : (activeFilter && activeFilter!==UNCAT ? activeFilter : '');
-    const bsel = $('f-biz');
-    bsel.innerHTML = state.bizs.map(b=>'<option value="'+esc(b)+'">'+esc(b)+'</option>').join('');
-    bsel.value = link ? link.biz : state.activeBiz;
     selectedColor = link ? link.color : COLORS[state.links.length % COLORS.length];
     $('form-err').style.display='none';
     buildSwatches();
@@ -804,17 +638,16 @@
     const url  = normalizeUrl($('f-url').value);
     const note = $('f-note').value.trim();
     const cat  = $('f-cat').value.trim();
-    const biz  = $('f-biz').value || state.activeBiz;
     const err = $('form-err');
     if(!name){ err.textContent='กรุณาใส่ชื่อปุ่ม'; err.style.display='block'; return; }
     if(!url){ err.textContent='URL ไม่ถูกต้อง — ลองใส่ในรูปแบบ https://example.com'; err.style.display='block'; return; }
 
     if(editingId){
       const l = state.links.find(x=>x.id===editingId);
-      if(l){ l.name=name; l.url=url; l.note=note; l.cat=cat; l.biz=biz; l.color=selectedColor; }
+      if(l){ l.name=name; l.url=url; l.note=note; l.cat=cat; l.color=selectedColor; }
       toast('แก้ไขลิงก์แล้ว');
     }else{
-      state.links.push({ id:'l'+Date.now()+Math.floor(Math.random()*1000), name, url, note, cat, biz, color:selectedColor });
+      state.links.push({ id:'l'+Date.now()+Math.floor(Math.random()*1000), name, url, note, cat, color:selectedColor });
       toast('เพิ่ม "'+name+'" แล้ว');
     }
     closeModal();
@@ -823,60 +656,61 @@
   }
 
   /* ---------- events ---------- */
+  $('sync-btn').onclick = ()=>{
+    $('sync-url').value = syncConfig.url;
+    $('sync-token').value = syncConfig.token;
+    syncStatus(syncConfig.url ? 'พร้อมทดสอบการเชื่อมต่อ' : 'ยังไม่ได้ตั้งค่าซิงก์');
+    $('sync-overlay').classList.add('open');
+  };
+  $('sync-cancel-btn').onclick = ()=>$('sync-overlay').classList.remove('open');
+  $('sync-overlay').addEventListener('click', e=>{ if(e.target===$('sync-overlay')) $('sync-overlay').classList.remove('open'); });
+  $('sync-test-btn').onclick = async ()=>{
+    const url = $('sync-url').value.trim();
+    const token = $('sync-token').value.trim();
+    if(!url || !token){ syncStatus('กรุณาใส่ URL และรหัสลับให้ครบ', 'err'); return; }
+    const previous = syncConfig;
+    syncConfig = Object.assign({}, syncConfig, {url, token});
+    await pullFromSheet(true);
+    syncConfig = previous;
+  };
+  $('sync-push-btn').onclick = async ()=>{
+    const url = $('sync-url').value.trim();
+    const token = $('sync-token').value.trim();
+    if(!url || !token){ syncStatus('กรุณาใส่ URL และรหัสลับให้ครบ', 'err'); return; }
+    try{ new URL(url); }catch(e){ syncStatus('Web app URL ไม่ถูกต้อง', 'err'); return; }
+    if(!confirm('อัปโหลดข้อมูล '+state.links.length+' ลิงก์จากเครื่องนี้ขึ้น Google Sheet? ข้อมูลเดิมใน Sheet จะถูกแทนที่')) return;
+    syncConfig.url=url; syncConfig.token=token; saveSyncConfig();
+    syncStatus('กำลังตรวจสอบการเชื่อมต่อ…');
+    try{ await syncRequest('get'); }
+    catch(err){ syncStatus('เชื่อมต่อไม่ได้: '+err.message, 'err'); return; }
+    syncStatus('กำลังอัปโหลดข้อมูลจากเครื่อง…');
+    const ok = await syncToSheet();
+    if(ok){
+      syncStatus('ส่งข้อมูลขึ้น Google Sheet แล้ว กำลังตรวจสอบ…', 'ok');
+      toast('ส่งข้อมูล '+state.links.length+' ลิงก์ขึ้น Google Sheet แล้ว');
+    }else syncStatus('อัปโหลดไม่สำเร็จ — ตรวจ URL และรหัสลับ', 'err');
+  };
+  $('sync-save-btn').onclick = async ()=>{
+    const url = $('sync-url').value.trim();
+    const token = $('sync-token').value.trim();
+    if(!url || !token){ syncStatus('กรุณาใส่ URL และรหัสลับให้ครบ', 'err'); return; }
+    try{ new URL(url); }catch(e){ syncStatus('Web app URL ไม่ถูกต้อง', 'err'); return; }
+    syncConfig.url=url; syncConfig.token=token; saveSyncConfig();
+    syncStatus('กำลังตรวจข้อมูลเดิมใน Google Sheet…');
+    const source = await pullFromSheet(true);
+    if(source==='error') return;
+    $('sync-overlay').classList.remove('open');
+    if(source==='empty'){
+      syncToSheet();
+      toast('บันทึกการตั้งค่าแล้ว — กำลังอัปโหลดข้อมูลขึ้น Google Sheet');
+    }else toast('บันทึกการตั้งค่าแล้ว — ใช้ข้อมูลล่าสุดจาก Google Sheet');
+  };
   $('add-btn').onclick   = ()=>openModal(null);
   $('empty-add').onclick = ()=>openModal(null);
   $('cancel-btn').onclick= closeModal;
   $('save-btn').onclick  = submit;
   overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
-
-  /* ---------- biz modal ---------- */
-  const bizOverlay = $('biz-overlay');
-  let bizMode = 'add', bizOld = '';
-  function openBizModal(mode, old){
-    bizMode = mode; bizOld = old || '';
-    $('biz-modal-title').textContent = mode==='add' ? 'เพิ่มธุรกิจ' : 'เปลี่ยนชื่อธุรกิจ';
-    $('f-biz-name').value = old || '';
-    $('biz-err').style.display='none';
-    bizOverlay.classList.add('open');
-    setTimeout(()=>$('f-biz-name').focus(), 60);
-  }
-  function closeBizModal(){ bizOverlay.classList.remove('open'); }
-  function submitBiz(){
-    const name = $('f-biz-name').value.trim();
-    const err = $('biz-err');
-    if(!name){ err.textContent='กรุณาใส่ชื่อธุรกิจ'; err.style.display='block'; return; }
-    if(state.bizs.includes(name) && name !== bizOld){
-      err.textContent='มีธุรกิจชื่อนี้อยู่แล้ว'; err.style.display='block'; return;
-    }
-    if(bizMode==='add'){
-      state.bizs.push(name);
-      state.activeBiz = name;
-      activeFilter = null;
-      toast('เพิ่มธุรกิจ "'+name+'" แล้ว');
-    }else{
-      const i = state.bizs.indexOf(bizOld);
-      if(i>=0) state.bizs[i] = name;
-      state.links.forEach(l=>{ if(l.biz===bizOld) l.biz = name; });
-      if(state.activeBiz===bizOld) state.activeBiz = name;
-      toast('เปลี่ยนชื่อเป็น "'+name+'" แล้ว');
-    }
-    closeBizModal();
-    render();
-    save();
-  }
-  $('biz-cancel-btn').onclick = closeBizModal;
-  $('biz-save-btn').onclick = submitBiz;
-  bizOverlay.addEventListener('click', e=>{ if(e.target===bizOverlay) closeBizModal(); });
   document.addEventListener('keydown', e=>{
-    if($('qr-overlay').classList.contains('open')){
-      if(e.key==='Escape') closeQr();
-      return;
-    }
-    if(bizOverlay.classList.contains('open')){
-      if(e.key==='Escape') closeBizModal();
-      if(e.key==='Enter' && e.target.tagName==='INPUT') submitBiz();
-      return;
-    }
     if(e.key==='Escape' && overlay.classList.contains('open')) closeModal();
     if(e.key==='Enter' && overlay.classList.contains('open') && e.target.tagName==='INPUT') submit();
   });
@@ -893,19 +727,6 @@
 
   groupsEl.addEventListener('click', e=>{
     if(e.target.closest('.drag-handle')){ e.preventDefault(); return; }
-    const qb = e.target.closest('.qr-btn');
-    if(qb){
-      e.preventDefault(); e.stopPropagation();
-      const l = state.links.find(x=>x.id===qb.dataset.qr);
-      if(l) openQr(l);
-      return;
-    }
-    const gm = e.target.closest('[data-catmove]');
-    if(gm){
-      e.preventDefault(); e.stopPropagation();
-      moveCategory(gm.dataset.cat, gm.dataset.catmove==='up' ? -1 : 1);
-      return;
-    }
     const btn = e.target.closest('[data-act]');
     if(!btn) return;
     e.preventDefault(); e.stopPropagation();
@@ -933,32 +754,6 @@
     render();
     save();
   });
-
-  /* เลื่อนทั้งหมวด (ทุกลิงก์ในหมวด) ขึ้นหรือลง — เฉพาะในธุรกิจที่เลือก */
-  function moveCategory(cat, dir){
-    cat = cat || '';
-    const inBiz = l => l.biz === state.activeBiz;
-    const order = [];
-    state.links.forEach(l=>{
-      if(!inBiz(l)) return;
-      const c = (l.cat||'').trim();
-      if(!order.includes(c)) order.push(c);
-    });
-    const i = order.indexOf(cat);
-    const j = i + dir;
-    if(i < 0 || j < 0 || j >= order.length) return;
-    [order[i], order[j]] = [order[j], order[i]];
-    const blocks = {};
-    order.forEach(c=>{ blocks[c] = []; });
-    state.links.forEach(l=>{ if(inBiz(l)) blocks[(l.cat||'').trim()].push(l); });
-    const reordered = order.reduce((acc,c)=>acc.concat(blocks[c]), []);
-    // แทนที่เฉพาะตำแหน่งของลิงก์ในธุรกิจนี้ ลิงก์ธุรกิจอื่นอยู่ที่เดิม
-    const idxs = [];
-    state.links.forEach((l,k)=>{ if(inBiz(l)) idxs.push(k); });
-    reordered.forEach((l,k)=>{ state.links[idxs[k]] = l; });
-    render();
-    save();
-  }
 
   /* ---------- drag & drop (เมาส์ + สัมผัส ผ่าน Pointer Events) ---------- */
   let drag = null;
@@ -1050,62 +845,47 @@
     save();
   }
 
-  /* ---------- QR code ---------- */
-  const qrOverlay = $('qr-overlay');
-  let qrLink = null;
-  function openQr(l){
-    qrLink = l;
-    $('qr-name').textContent = l.name;
-    $('qr-url').textContent = l.url;
-    const box = $('qr-box');
-    box.innerHTML = '';
-    if(typeof QRCode !== 'undefined'){
-      new QRCode(box, {
-        text: l.url,
-        width: 220,
-        height: 220,
-        colorDark: '#1F2633',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }else{
-      box.innerHTML = '<div class="qr-fail">สร้าง QR ไม่ได้ (โหลดไลบรารีไม่สำเร็จ — เช็กอินเทอร์เน็ตแล้วรีเฟรช)<br><br>'+esc(l.url)+'</div>';
-    }
-    qrOverlay.classList.add('open');
-  }
-  function closeQr(){ qrOverlay.classList.remove('open'); qrLink = null; }
-  $('qr-close-btn').onclick = closeQr;
-  qrOverlay.addEventListener('click', e=>{ if(e.target===qrOverlay) closeQr(); });
+  /* editable header */
+  ['title','subtitle'].forEach(id=>{
+    const el = $(id);
+    el.addEventListener('blur', ()=>{
+      const v = el.textContent.trim();
+      if(v){ state[id]=v; save(); }
+      else render();
+    });
+    el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+  });
 
-  $('qr-dl-btn').onclick = ()=>{
-    if(!qrLink) return;
-    const box = $('qr-box');
-    const img = box.querySelector('img');
-    const canvas = box.querySelector('canvas');
-    const src = (img && img.src) ? img.src : (canvas ? canvas.toDataURL('image/png') : null);
-    if(!src){ toast('ยังไม่มีรูป QR ให้บันทึก'); return; }
+  /* ---------- export / import ---------- */
+  $('export-btn').onclick = ()=>{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
-    a.href = src;
-    a.download = 'qr-' + qrLink.name.replace(/[^\wก-๙-]+/g,'-').slice(0,40) + '.png';
+    a.href = URL.createObjectURL(blob);
+    a.download = 'linkhub-backup.json';
     a.click();
-    toast('บันทึกรูป QR แล้ว');
+    URL.revokeObjectURL(a.href);
+    toast('ดาวน์โหลดไฟล์สำรองแล้ว');
   };
-
-  $('qr-copy-btn').onclick = async ()=>{
-    if(!qrLink) return;
-    try{
-      await navigator.clipboard.writeText(qrLink.url);
-      toast('คัดลอกลิงก์แล้ว');
-    }catch(e){
-      const t = document.createElement('textarea');
-      t.value = qrLink.url;
-      document.body.appendChild(t);
-      t.select();
-      try{ document.execCommand('copy'); toast('คัดลอกลิงก์แล้ว'); }
-      catch(err){ toast('คัดลอกไม่สำเร็จ — กดค้างที่ลิงก์เพื่อคัดลอกเอง'); }
-      t.remove();
-    }
-  };
+  $('import-btn').onclick = ()=>$('import-file').click();
+  $('import-file').addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const d = JSON.parse(reader.result);
+        if(!d || !Array.isArray(d.links)) throw new Error('bad format');
+        state = Object.assign({title:state.title, subtitle:state.subtitle, links:[]}, d);
+        render();
+        save();
+        toast('นำเข้าข้อมูล '+state.links.length+' ลิงก์แล้ว');
+      }catch(err){
+        toast('ไฟล์ไม่ถูกต้อง — ต้องเป็นไฟล์สำรองจากหน้านี้เท่านั้น');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
 
   /* ---------- init ---------- */
   load();
