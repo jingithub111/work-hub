@@ -260,6 +260,7 @@
     <div class="modal-actions">
       <button class="btn" id="sync-cancel-btn">ยกเลิก</button>
       <button class="btn" id="sync-test-btn">ทดสอบและดึงข้อมูล</button>
+      <button class="btn" id="sync-push-btn">อัปโหลดข้อมูลเครื่อง</button>
       <button class="btn btn-amber" id="sync-save-btn">บันทึกการตั้งค่า</button>
     </div>
   </div>
@@ -397,8 +398,10 @@
     try{
       await syncRequest('save', {data:JSON.stringify(state)});
       syncConfig.lastSyncedAt=Date.now(); saveSyncConfig();
+      return true;
     }catch(err){
       console.warn('Work Hub sync:', err);
+      return false;
     }finally{
       syncInFlight = false;
       if(syncPending || stateRevision > sentRevision){
@@ -633,6 +636,20 @@
     syncConfig = Object.assign({}, syncConfig, {url, token});
     await pullFromSheet(true);
     syncConfig = previous;
+  };
+  $('sync-push-btn').onclick = async ()=>{
+    const url = $('sync-url').value.trim();
+    const token = $('sync-token').value.trim();
+    if(!url || !token){ syncStatus('กรุณาใส่ URL และรหัสลับให้ครบ', 'err'); return; }
+    try{ new URL(url); }catch(e){ syncStatus('Web app URL ไม่ถูกต้อง', 'err'); return; }
+    if(!confirm('อัปโหลดข้อมูล '+state.links.length+' ลิงก์จากเครื่องนี้ขึ้น Google Sheet? ข้อมูลเดิมใน Sheet จะถูกแทนที่')) return;
+    syncConfig.url=url; syncConfig.token=token; saveSyncConfig();
+    syncStatus('กำลังอัปโหลดข้อมูลจากเครื่อง…');
+    const ok = await syncToSheet();
+    if(ok){
+      syncStatus('อัปโหลดข้อมูลขึ้น Google Sheet สำเร็จ', 'ok');
+      toast('อัปโหลดข้อมูล '+state.links.length+' ลิงก์ขึ้น Google Sheet แล้ว');
+    }else syncStatus('อัปโหลดไม่สำเร็จ — ตรวจ URL และรหัสลับ', 'err');
   };
   $('sync-save-btn').onclick = async ()=>{
     const url = $('sync-url').value.trim();
