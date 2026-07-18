@@ -367,6 +367,10 @@
     return postToSheet(params);
   }
   function postToSheet(params){
+    const body = new URLSearchParams(params);
+    if(navigator.sendBeacon && navigator.sendBeacon(syncConfig.url, body)){
+      return Promise.resolve({ok:true});
+    }
     return new Promise(resolve=>{
       const frameName = '__workHubPost'+Date.now()+Math.floor(Math.random()*100000);
       const frame = document.createElement('iframe');
