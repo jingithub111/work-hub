@@ -6,9 +6,9 @@ Work Hub อ่านและบันทึกรายการใน Google 
 
 1. เปิด Google Sheet ของ Work Hub แล้วเลือก **ส่วนขยาย → Apps Script** เก็บสำเนาของเวอร์ชันที่เผยแพร่อยู่ก่อนแทนที่โค้ดด้วย [google-apps-script.js](./google-apps-script.js)
 2. บันทึกโค้ด เลือกฟังก์ชัน `initializeWorkHub` แล้วกด **Run** ใน Apps Script Editor ถ้า Google ขอสิทธิ์ ให้เจ้าของตรวจและอนุญาตเอง
-3. เปิด **Execution log** แล้วบันทึกลิงก์เจ้าของเป็นบุ๊กมาร์กส่วนตัว ลิงก์ขึ้นต้นด้วย `https://jingithub111.github.io/work-hub/#owner=` และใช้เข้าหน้าหลักได้โดยไม่ต้องพิมพ์รหัส
+3. เปิด **Execution log** แล้วเก็บลิงก์เจ้าของไว้เป็นส่วนตัว ลิงก์ขึ้นต้นด้วย `https://jingithub111.github.io/work-hub/#owner=` และใช้เข้าหน้าหลักได้โดยไม่ต้องพิมพ์รหัส
 4. เลือก **Deploy → Manage deployments** แก้ไข Web app เดิมที่หน้า Work Hub ใช้ เลือก **New version** และเก็บ URL `/exec` เดิมไว้ ตรวจสอบ deployment เก่าที่ใช้ตารางนี้ด้วย การเปิด URL เดิมด้วย GET ควรตอบ `{"ok":true,"version":2,"ready":true}` ส่วนคำขอเดิมที่ใช้คีย์ซิงก์เก่าควรถูกปฏิเสธ
-5. เผยแพร่ [index.html](./index.html) บน GitHub Pages แล้วเปิดจากบุ๊กมาร์กลิงก์เจ้าของ ทดสอบว่าธุรกิจและลิงก์เดิมยังอยู่
+5. เผยแพร่ [index.html](./index.html) บน GitHub Pages แล้วเปิดจากลิงก์เจ้าของครั้งเดียว ตรวจว่าธุรกิจและลิงก์เดิมยังอยู่ จากนั้นเปิด Work Hub จากไอคอนเดิมหรือ URL ปกติในโปรไฟล์ Chrome เดิมได้เลย หากต้องการยกเลิกการจำ ให้กด **จัดการ → ออกจากเครื่องนี้**
 
 `initializeWorkHub` สร้างคีย์ใน Apps Script Properties และไม่แก้ไขเซลล์ในตาราง หากเรียกซ้ำ จะได้ลิงก์เจ้าของเดิม
 
