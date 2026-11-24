@@ -286,6 +286,7 @@
     <div class="biz-actions" id="biz-actions" hidden>
       <button class="btn" id="biz-rename" type="button">เปลี่ยนชื่อธุรกิจ</button>
       <button class="btn" id="biz-delete" type="button" hidden>ลบธุรกิจ</button>
+      <button class="btn" id="forget-owner" type="button" hidden>ออกจากเครื่องนี้</button>
     </div>
   </div>
 
@@ -403,8 +404,11 @@
   const UNCAT = '';
   const SYNC_URL   = 'https://script.google.com/macros/s/AKfycbwE3YIDae0I0mvwo_G45qCsORC4T19jv9lAjuzDl4jWdtp-D6LkCzpyypq_ZhpooIs0/exec';
   const accessParams = new URLSearchParams(location.hash.slice(1));
-  const isOwner = accessParams.has('owner') && !accessParams.has('share');
-  const accessKey = accessParams.get(isOwner ? 'owner' : 'share') || '';
+  const OWNER_STORAGE_KEY = 'jero-work-hub:owner-access';
+  const isShare = accessParams.has('share');
+  const hasOwnerLink = !isShare && accessParams.has('owner');
+  const accessKey = isShare ? accessParams.get('share') : hasOwnerLink ? accessParams.get('owner') : storedOwner();
+  const isOwner = !isShare && Boolean(accessKey);
   let state = {
     title: 'Work Hub',
     subtitle: 'รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว',
@@ -444,6 +448,18 @@
   const groupsEl=$('groups'), emptyEl=$('empty'), overlay=$('overlay'),
         searchEl=$('search'), toastEl=$('toast'), chipsEl=$('chips');
 
+  function storedOwner(){
+    try{ return localStorage.getItem(OWNER_STORAGE_KEY) || ''; }
+    catch(err){ return ''; }
+  }
+
+  function rememberOwner(){
+    try{
+      localStorage.setItem(OWNER_STORAGE_KEY, accessKey);
+    }catch(err){ return; }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
   function syncStatus(message, kind){
     const el = $('sync-badge');
     el.textContent = message;
@@ -464,6 +480,7 @@
 
   function applyView(result){
     if(isOwner !== Array.isArray(result.shares)) throw new Error('access');
+    if(isOwner && hasOwnerLink && location.hash) rememberOwner();
     const previousBusiness = state.activeBiz;
     state = result.data;
     if(state.bizs.includes(previousBusiness)) state.activeBiz = previousBusiness;
@@ -497,6 +514,9 @@
       }
     }catch(err){
       if(err.message==='access'){
+        if(isOwner && !hasOwnerLink && storedOwner()===accessKey){
+          try{ localStorage.removeItem(OWNER_STORAGE_KEY); }catch(err){}
+        }
         state.links = [];
         revision = '';
         shares = [];
@@ -509,7 +529,9 @@
         $('count-label').textContent = '';
         $('title').textContent = 'Work Hub';
         $('subtitle').textContent = '';
-        $('access-status').textContent = 'ลิงก์นี้ใช้ไม่ได้แล้ว กรุณาเปิดจากบุ๊กมาร์กลิงก์เจ้าของ หรือขอลิงก์แชร์ใหม่';
+        $('access-status').textContent = isShare
+          ? 'ลิงก์แชร์นี้ใช้ไม่ได้แล้ว กรุณาขอลิงก์ใหม่'
+          : 'เปิดลิงก์เจ้าของอีกครั้งเพื่อเข้าใช้งาน';
         $('access-status').hidden = false;
         syncStatus('', '');
       }else if($('board').hidden){
@@ -700,6 +722,11 @@
   $('biz-add').onclick = ()=>openBizModal('add');
   $('biz-rename').onclick = ()=>openBizModal('rename', state.activeBiz);
   $('biz-delete').onclick = ()=>deleteBiz(state.activeBiz);
+  $('forget-owner').onclick = ()=>{
+    try{ localStorage.removeItem(OWNER_STORAGE_KEY); }
+    catch(err){ toast('ออกจากเครื่องนี้ไม่สำเร็จ'); return; }
+    location.replace(location.pathname + location.search);
+  };
 
   function renderBizPicker(){
     const options = state.bizs.map(b=>{
@@ -710,6 +737,7 @@
     bizSelect.value = state.activeBiz;
     $('biz-actions').hidden = !manageMode;
     $('biz-delete').hidden = state.bizs.length<2;
+    $('forget-owner').hidden = !isOwner || storedOwner()!==accessKey;
   }
 
   function deleteBiz(b){
@@ -1256,15 +1284,21 @@
   $('add-btn').hidden = !isOwner;
   $('empty-add').hidden = !isOwner;
   $('link-business-field').hidden = !isOwner;
+  window.addEventListener('hashchange', ()=>location.reload());
+  window.addEventListener('storage', e=>{
+    if(isOwner && (e.key===OWNER_STORAGE_KEY || e.key===null) && storedOwner()!==accessKey){
+      location.replace(location.pathname + location.search);
+    }
+  });
   if(/^[a-f0-9]{64}$/.test(accessKey)){
     readBoard();
     setInterval(readBoard, 15000);
     window.addEventListener('focus', readBoard);
   }else{
     $('count-label').textContent = '';
-    $('access-status').textContent = accessKey
-      ? 'ลิงก์นี้ไม่ครบ กรุณาเปิดจากบุ๊กมาร์กลิงก์เจ้าของ หรือขอลิงก์แชร์ใหม่'
-      : 'สำหรับเจ้าของ ให้เปิดจากบุ๊กมาร์กลิงก์เจ้าของ สำหรับผู้รับแชร์ ให้เปิดจากลิงก์ที่ได้รับ';
+    $('access-status').textContent = isShare
+      ? 'ลิงก์แชร์นี้ไม่ครบ กรุณาขอลิงก์ใหม่'
+      : 'เปิดลิงก์เจ้าของครั้งเดียว จากนั้นเปิด Work Hub ได้ตามปกติ';
   }
 })();
 </script>
