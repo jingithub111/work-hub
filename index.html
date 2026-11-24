@@ -90,25 +90,11 @@
   .manage-mode .group-move{display:flex}
   .group-move .icon-btn{width:27px;height:27px;font-size:12px;border-radius:8px}
 
-  /* ---------- business tabs ---------- */
-  .biz-bar{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin-bottom:6px;
-    -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#8B95A6 transparent}
-  .biz-tab{
-    display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);
-    background:var(--surface);color:var(--muted);border-radius:14px;padding:9px 15px;
-    font-family:var(--font-main);font-size:14px;font-weight:600;cursor:pointer;
-    white-space:nowrap;box-shadow:var(--shadow);transition:all .15s;flex-shrink:0;
-  }
-  .biz-tab:hover{color:var(--text)}
-  .biz-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .biz-tab.sel{background:var(--accent);border-color:var(--accent);color:#fff}
-  .biz-tab.add{border-style:dashed;background:transparent;box-shadow:none;color:#AEB7C6}
-  .biz-tab.add:hover{color:var(--accent);border-color:var(--accent)}
-  .biz-n{font-size:11px;background:rgba(30,50,90,.07);border-radius:99px;padding:1px 8px;font-weight:600}
-  .biz-tab.sel .biz-n{background:rgba(255,255,255,.25)}
-  .biz-act{font-size:12px;opacity:.9;padding:2px 5px;border-radius:6px;cursor:pointer}
-  .biz-tab.sel .biz-act:hover{background:rgba(255,255,255,.22)}
-  .biz-tab.sel .biz-act.del:hover{background:rgba(255,120,120,.4)}
+  /* ---------- business picker ---------- */
+  .biz-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:14px}
+  .biz-bar .biz-select{min-width:0;color:var(--accent);text-overflow:ellipsis}
+  .biz-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+  .biz-actions[hidden]{display:none}
 
   /* ---------- toolbar ---------- */
   .toolbar{display:flex;gap:10px;margin-bottom:14px}
@@ -283,7 +269,14 @@
     <div><span class="sync-badge" id="sync-badge" aria-live="polite"></span></div>
   </header>
 
-  <div class="biz-bar" id="biz-bar" aria-label="เลือกธุรกิจ"></div>
+  <div class="biz-bar">
+    <select class="btn biz-select" id="biz-select" aria-label="เลือกธุรกิจ"></select>
+    <button class="btn" id="biz-add" type="button">+ ธุรกิจ</button>
+    <div class="biz-actions" id="biz-actions" hidden>
+      <button class="btn" id="biz-rename" type="button">เปลี่ยนชื่อธุรกิจ</button>
+      <button class="btn" id="biz-delete" type="button" hidden>ลบธุรกิจ</button>
+    </div>
+  </div>
 
   <div class="toolbar">
     <input class="search" id="search" type="search" placeholder="ค้นหาลิงก์…" aria-label="ค้นหาลิงก์">
@@ -580,51 +573,27 @@
     return seen;
   }
 
-  /* ---------- business tabs ---------- */
-  $('biz-bar').addEventListener('wheel', e=>{
-    if(e.ctrlKey || Math.abs(e.deltaX)>=Math.abs(e.deltaY)) return;
-    const bar = e.currentTarget;
-    const maxScroll = bar.scrollWidth - bar.clientWidth;
-    if(maxScroll<=0 || (e.deltaY<0 ? bar.scrollLeft<=0 : bar.scrollLeft>=maxScroll-1)) return;
+  /* ---------- business picker ---------- */
+  const bizSelect = $('biz-select');
+  bizSelect.addEventListener('change', ()=>{
+    state.activeBiz = bizSelect.value;
+    activeFilter = null;
+    render();
+    save();
+  });
+  $('biz-add').onclick = ()=>openBizModal('add');
+  $('biz-rename').onclick = ()=>openBizModal('rename', state.activeBiz);
+  $('biz-delete').onclick = ()=>deleteBiz(state.activeBiz);
 
-    let distance = e.deltaY;
-    if(e.deltaMode===1) distance *= 16;
-    if(e.deltaMode===2) distance *= bar.clientWidth;
-    e.preventDefault();
-    bar.scrollLeft += distance;
-  }, {passive:false});
-
-  function renderBizBar(){
-    const bizBar = $('biz-bar');
-    bizBar.innerHTML = '';
-    state.bizs.forEach(b=>{
-      const t = document.createElement('button');
-      t.className = 'biz-tab' + (b===state.activeBiz?' sel':'');
-      const nm = document.createElement('span'); nm.textContent = b; t.appendChild(nm);
+  function renderBizPicker(){
+    const options = state.bizs.map(b=>{
       const n = state.links.filter(l=>l.biz===b).length;
-      const cn = document.createElement('span'); cn.className='biz-n'; cn.textContent = n; t.appendChild(cn);
-      if(manageMode && b===state.activeBiz){
-        const e = document.createElement('span');
-        e.className='biz-act'; e.textContent='✎'; e.title='เปลี่ยนชื่อธุรกิจ';
-        e.onclick = ev=>{ ev.stopPropagation(); openBizModal('rename', b); };
-        t.appendChild(e);
-        if(state.bizs.length>1){
-          const x = document.createElement('span');
-          x.className='biz-act del'; x.textContent='✕'; x.title='ลบธุรกิจ';
-          x.onclick = ev=>{ ev.stopPropagation(); deleteBiz(b); };
-          t.appendChild(x);
-        }
-      }
-      t.onclick = ()=>{
-        if(state.activeBiz!==b){ state.activeBiz=b; activeFilter=null; render(); save(); }
-      };
-      bizBar.appendChild(t);
+      return new Option(`${b} (${n})`, b);
     });
-    const add = document.createElement('button');
-    add.className = 'biz-tab add';
-    add.textContent = '+ ธุรกิจ';
-    add.onclick = ()=>openBizModal('add');
-    bizBar.appendChild(add);
+    bizSelect.replaceChildren(...options);
+    bizSelect.value = state.activeBiz;
+    $('biz-actions').hidden = !manageMode;
+    $('biz-delete').hidden = state.bizs.length<2;
   }
 
   function deleteBiz(b){
@@ -639,7 +608,7 @@
 
   /* ---------- render ---------- */
   function render(){
-    renderBizBar();
+    renderBizPicker();
     const q = searchEl.value.trim().toLowerCase();
     const cats = categories();
     const bizLinks = state.links.filter(l=>l.biz===state.activeBiz);
