@@ -92,8 +92,7 @@
 
   /* ---------- business tabs ---------- */
   .biz-bar{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin-bottom:6px;
-    -webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .biz-bar::-webkit-scrollbar{display:none}
+    -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#8B95A6 transparent}
   .biz-tab{
     display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);
     background:var(--surface);color:var(--muted);border-radius:14px;padding:9px 15px;
@@ -582,6 +581,19 @@
   }
 
   /* ---------- business tabs ---------- */
+  $('biz-bar').addEventListener('wheel', e=>{
+    if(e.ctrlKey || Math.abs(e.deltaX)>=Math.abs(e.deltaY)) return;
+    const bar = e.currentTarget;
+    const maxScroll = bar.scrollWidth - bar.clientWidth;
+    if(maxScroll<=0 || (e.deltaY<0 ? bar.scrollLeft<=0 : bar.scrollLeft>=maxScroll-1)) return;
+
+    let distance = e.deltaY;
+    if(e.deltaMode===1) distance *= 16;
+    if(e.deltaMode===2) distance *= bar.clientWidth;
+    e.preventDefault();
+    bar.scrollLeft += distance;
+  }, {passive:false});
+
   function renderBizBar(){
     const bizBar = $('biz-bar');
     bizBar.innerHTML = '';
