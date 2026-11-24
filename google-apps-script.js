@@ -4,6 +4,7 @@
  */
 const LINKS_SHEET = 'Work Hub Links';
 const SETTINGS_SHEET = 'Work Hub Settings';
+const VISITS_SHEET = 'Work Hub Visits';
 const LINKS_HEADER = ['ID', 'Name', 'URL', 'Note', 'Category', 'Business', 'Color', 'Sort order'];
 const OWNER_KEY = 'workhub.owner';
 const BOOK_ID = 'workhub.spreadsheet';
@@ -46,7 +47,15 @@ function doPost(e) {
     if (scope && !hasScope_(board.data, scope)) return json_({ok: false, error: 'access'});
 
     if (params.action === 'read') {
-      return json_(view_(board.data, scope, props));
+      return json_(view_(book, board.data, scope, props));
+    }
+
+    if (params.action === 'visit') {
+      const entry = board.entries.find(item => item.link.id === params.id && (!scope || inScope_(item.link, scope)));
+      if (!entry || !/^[a-f0-9]{32}$/.test(params.visitor || '')) {
+        return json_({ok: false, error: 'access'});
+      }
+      return json_({ok: true, count: recordVisit_(book, entry.link.id, params.visitor)});
     }
 
     if (isOwner && params.action === 'save') {
@@ -60,7 +69,7 @@ function doPost(e) {
       writeBoard_(book, next);
       SpreadsheetApp.flush();
       pruneShares_(props, next);
-      return json_(view_(readBoard_(book).data, null, props));
+      return json_(view_(book, readBoard_(book).data, null, props));
     }
 
     if (isOwner && (params.action === 'shareCreate' || params.action === 'shareRevoke')) {
@@ -98,7 +107,7 @@ function doPost(e) {
       SpreadsheetApp.flush();
       const updated = readBoard_(book).data;
       pruneShares_(props, updated);
-      return json_(view_(updated, scope, props));
+      return json_(view_(book, updated, scope, props));
     }
     return json_({ok: false, error: 'access'});
   } catch (err) {
@@ -142,11 +151,40 @@ function project_(data, scope) {
   };
 }
 
-function view_(data, scope, props) {
+function view_(book, data, scope, props) {
   const visible = scope ? project_(data, scope) : data;
-  const result = {ok: true, data: visible, revision: revision_(visible)};
+  const result = {ok: true, data: visible, revision: revision_(visible), views: viewCounts_(book, visible.links)};
   if (!scope) result.shares = shares_(props);
   return result;
+}
+
+function visitRows_(sheet) {
+  const count = sheet ? sheet.getLastRow() - 1 : 0;
+  return count > 0 ? sheet.getRange(2, 1, count, 2).getValues() : [];
+}
+
+function viewCounts_(book, links) {
+  const counts = Object.create(null);
+  links.forEach(link => { counts[link.id] = 0; });
+  for (const [id] of visitRows_(book.getSheetByName(VISITS_SHEET))) {
+    if (Object.prototype.hasOwnProperty.call(counts, id)) counts[id]++;
+  }
+  return counts;
+}
+
+function recordVisit_(book, id, visitor) {
+  let sheet = book.getSheetByName(VISITS_SHEET);
+  if (!sheet) {
+    sheet = book.insertSheet(VISITS_SHEET);
+    sheet.appendRow(['Link ID', 'Visit digest']);
+    sheet.setFrozenRows(1);
+  }
+  const digest = revision_([id, visitor]);
+  const visits = visitRows_(sheet).filter(([link]) => String(link) === id);
+  if (visits.some(([, previous]) => previous === digest)) return visits.length;
+  sheet.appendRow([sheetText_(id), digest]);
+  SpreadsheetApp.flush();
+  return visits.length + 1;
 }
 
 function revision_(data) {

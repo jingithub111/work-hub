@@ -163,6 +163,8 @@
     border:3px solid var(--c,var(--accent))}
   .card-name{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .card-note{color:var(--muted);font-size:13px;margin-top:5px;padding-left:23px}
+  .card-views{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding-left:23px;font-size:11px;color:#627187}
+  .card-views svg{width:14px;height:14px}
   .card-domain{font-size:11px;color:#AEB7C6;margin-top:7px;padding-left:23px;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -429,6 +431,10 @@
   let activeFilter = null; // null = ทั้งหมด
   let revision = '';
   let shares = [];
+  let viewCounts = Object.create(null);
+  let visitorId = '';
+  const recordedVisits = new Set();
+  const pendingVisits = new Set();
   let writing = false;
   let pendingSave = false;
   let saveConflict = false;
@@ -448,7 +454,7 @@
     const body = new URLSearchParams({action, key:accessKey, ...payload});
     const response = await fetch(SYNC_URL, {
       method:'POST', body, credentials:'omit', referrerPolicy:'no-referrer',
-      signal:AbortSignal.timeout(20000)
+      signal:AbortSignal.timeout(20000), keepalive:action==='visit'
     });
     if(!response.ok) throw new Error('network');
     const result = await response.json();
@@ -464,6 +470,11 @@
     migrate();
     revision = result.revision;
     shares = result.shares || [];
+    const updatedViews = Object.create(null);
+    for(const link of state.links){
+      updatedViews[link.id] = Math.max(viewCounts[link.id] || 0, Number(result.views?.[link.id]) || 0);
+    }
+    viewCounts = updatedViews;
     render();
     $('access-status').hidden = true;
     $('board').hidden = false;
@@ -478,7 +489,8 @@
       const result = await request('read');
       if(revision===startingRevision && !writing && !pendingSave && !saveConflict && !overlay.classList.contains('open') &&
          !$('biz-overlay').classList.contains('open') && !$('share-overlay').classList.contains('open')){
-        if(revision !== result.revision || JSON.stringify(shares) !== JSON.stringify(result.shares || [])){
+        if(revision !== result.revision || JSON.stringify(shares) !== JSON.stringify(result.shares || []) ||
+           JSON.stringify(viewCounts) !== JSON.stringify(result.views || {})){
           applyView(result);
         }
         syncStatus('', '');
@@ -488,6 +500,7 @@
         state.links = [];
         revision = '';
         shares = [];
+        viewCounts = Object.create(null);
         groupsEl.replaceChildren();
         bizSelect.replaceChildren();
         closeModal();
@@ -551,6 +564,34 @@
   }
   function esc(s){
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  async function recordVisit(card){
+    const id = card?.dataset.id;
+    if(!id || !revision || recordedVisits.has(id) || pendingVisits.has(id)) return;
+    if(!visitorId){
+      try{
+        visitorId = localStorage.getItem('workhub-visitor') || '';
+        if(!/^[a-f0-9]{32}$/.test(visitorId)){
+          visitorId = crypto.randomUUID().replace(/-/g,'');
+          localStorage.setItem('workhub-visitor', visitorId);
+        }
+      }catch(err){
+        if(!visitorId) visitorId = crypto.randomUUID().replace(/-/g,'');
+      }
+    }
+    pendingVisits.add(id);
+    try{
+      const result = await request('visit',{id,visitor:visitorId});
+      recordedVisits.add(id);
+      viewCounts[id] = Math.max(viewCounts[id] || 0, result.count);
+      for(const visible of groupsEl.querySelectorAll('.card')){
+        if(visible.dataset.id===id) visible.querySelector('.view-count').textContent = viewCounts[id];
+      }
+    }catch(err){
+      // Opening the destination works even when the counter is unavailable.
+    }finally{
+      pendingVisits.delete(id);
+    }
   }
   function categories(){
     const seen = [];
@@ -788,6 +829,10 @@
           '<div class="card-top"><span class="dot"></span><span class="card-name">'+esc(l.name)+'</span></div>'+
           (l.note ? '<div class="card-note">'+esc(l.note)+'</div>' : '')+
           '<div class="card-domain">'+esc(domain(l.url))+'</div>'+
+          '<span class="card-views" title="จำนวนเบราว์เซอร์ที่เปิดลิงก์" aria-label="จำนวนเบราว์เซอร์ที่เปิดลิงก์">'+
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.7"/></svg>'+
+            '<span class="view-count">'+(viewCounts[l.id] || 0)+'</span>'+
+          '</span>'+
           '<button class="qr-btn" data-qr="'+esc(l.id)+'" title="แสดง QR Code" aria-label="แสดง QR Code ของ '+esc(l.name)+'">'+
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M20 20h1M17 17h4v4"/></svg>'+
           '</button>'+
@@ -995,7 +1040,10 @@
       return;
     }
     const btn = e.target.closest('[data-act]');
-    if(!btn) return;
+    if(!btn){
+      if(!e.defaultPrevented) recordVisit(e.target.closest('.card'));
+      return;
+    }
     e.preventDefault(); e.stopPropagation();
     const id = btn.dataset.id;
     const i = state.links.findIndex(l=>l.id===id);
@@ -1021,6 +1069,11 @@
     }
     render();
     save();
+  });
+  groupsEl.addEventListener('auxclick', e=>{
+    if(e.button===1 && !e.target.closest('button') && !e.defaultPrevented){
+      recordVisit(e.target.closest('.card'));
+    }
   });
 
   /* เลื่อนทั้งหมวด (ทุกลิงก์ในหมวด) ขึ้นหรือลง — เฉพาะในธุรกิจที่เลือก */
