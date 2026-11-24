@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
 <title>Work Hub — ศูนย์รวมลิงก์มอนิเตอร์</title>
-<meta name="theme-color" content="#EDF1F7">
+<meta name="theme-color" content="#F2F5F3">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,18 +13,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 <style>
   :root{
-    --bg:#EDF1F7;
+    --bg:#F2F5F3;
     --surface:#FFFFFF;
-    --surface-2:#F4F7FC;
-    --border:#E3E9F2;
-    --text:#1F2633;
-    --muted:#8B95A6;
+    --surface-2:#F4F7F5;
+    --border:#DCE5DF;
+    --text:#172820;
+    --muted:#52665B;
     --accent:#0F6A4F;
     --accent-soft:#E2F0E9;
-    --danger:#F16A6A;
-    --radius:18px;
-    --shadow:0 2px 10px rgba(30,50,90,.06);
-    --shadow-lift:0 10px 26px rgba(30,50,90,.12);
+    --danger:#A82835;
+    --radius:16px;
+    --shadow:0 2px 6px rgba(23,40,32,.05);
     --font-main:'Prompt','Noto Sans Thai',system-ui,-apple-system,sans-serif;
     --font-mono:'Prompt','Noto Sans Thai',system-ui,sans-serif;
   }
@@ -36,48 +35,34 @@
     font-family:var(--font-main);
     min-height:100vh;
   }
-  .wrap{max-width:580px;margin:0 auto;padding:32px 16px 96px}
+  .wrap{width:min(100%,864px);margin:0 auto;padding:28px 16px 72px}
 
   /* ---------- header ---------- */
-  header{text-align:center;margin-bottom:26px}
-  .status-line{
-    display:inline-flex;align-items:center;gap:8px;
-    font-size:11px;letter-spacing:.14em;font-weight:500;
-    color:var(--muted);text-transform:uppercase;margin-bottom:14px;
+  header{
+    display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;
+    gap:8px 16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)
   }
-  .led{width:8px;height:8px;border-radius:50%;background:var(--accent);
-    box-shadow:0 0 0 4px var(--accent-soft);animation:pulse 2.4s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  @media (prefers-reduced-motion:reduce){.led{animation:none}}
-  h1{font-size:27px;font-weight:700;letter-spacing:-.01em;padding:2px 10px;display:inline-block}
-  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;padding:2px 10px;display:inline-block}
-  .logo{width:200px;max-width:66%;display:block;margin:0 auto 10px}
+  .logo{display:block;width:92px;height:auto}
+  .heading{min-width:0;border-inline-start:1px solid var(--border);padding-inline-start:16px}
+  h1{font-size:clamp(23px,4vw,32px);font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+  .subtitle{color:var(--muted);font-size:14px;line-height:1.5;margin-top:4px;overflow-wrap:anywhere}
+  .heading-meta{grid-column:2;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-inline-start:16px}
+  #count-label{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+  .heading-meta:has(> :empty + :empty),.subtitle:empty,#count-label:empty{display:none}
   .sync-badge{
-    display:inline-block;font-size:11px;font-weight:500;margin-top:8px;
-    color:#AEB7C6;background:var(--surface);border:1px solid var(--border);
-    border-radius:99px;padding:3px 12px;
+    display:inline-block;font-size:12px;font-weight:500;
+    color:var(--muted);background:var(--surface);border:1px solid var(--border);
+    border-radius:99px;padding:3px 8px;
   }
   .sync-badge:empty{display:none}
-  .sync-badge.ok{color:#2FA35C;border-color:#BFE6CD;background:#EDFAF2}
-  .sync-badge.err{color:#D25555;border-color:#F2C9C9;background:#FDF1F1}
-
-  /* QR button (ท้ายการ์ด) */
-  .qr-btn{
-    position:absolute;right:14px;top:50%;transform:translateY(-50%);
-    width:38px;height:38px;border-radius:11px;border:1px solid var(--border);
-    background:var(--surface-2);color:var(--muted);cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:color .15s,border-color .15s,background .15s;
-  }
-  .qr-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
-  .qr-btn:focus-visible{outline:2px solid var(--accent)}
-  .qr-btn svg{width:19px;height:19px}
+  .sync-badge.ok{color:var(--accent);border-color:#BFE6CD;background:#EDFAF2}
+  .sync-badge.err{color:var(--danger);border-color:#F2C9C9;background:#FDF1F1}
   .manage-mode .qr-btn{display:none}
 
   /* QR modal */
   .qr-modal{max-width:340px;text-align:center}
   .qr-title{font-size:17px;font-weight:600;margin-bottom:2px;word-break:break-word}
-  .qr-sub{font-size:12px;color:#AEB7C6;margin-bottom:18px;word-break:break-all}
+  .qr-sub{font-size:12px;color:var(--muted);margin-bottom:18px;overflow-wrap:anywhere}
   .qr-box{
     display:flex;align-items:center;justify-content:center;
     background:#fff;border:1px solid var(--border);border-radius:16px;
@@ -87,35 +72,31 @@
   .qr-fail{font-size:13px;color:var(--muted);padding:20px;max-width:240px;word-break:break-all}
 
   /* ปุ่มเลื่อนหมวดในหัวกลุ่ม (โหมดจัดการ) */
-  .group-move{display:none;gap:5px}
+  .group-move{display:none;gap:8px}
   .manage-mode .group-move{display:flex}
-  .group-move .icon-btn{width:27px;height:27px;font-size:12px;border-radius:8px}
 
   /* ---------- business picker ---------- */
   .biz-bar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin-bottom:14px}
   .biz-bar .biz-select{min-width:0;color:var(--accent);text-overflow:ellipsis}
   .biz-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
   .biz-bar[hidden],.biz-actions[hidden]{display:none}
-  .shared-board .card{padding-right:98px}
-  .shared-board .card .controls{display:flex;right:13px}
-  .shared-board .qr-btn{right:49px}
   #share-url{font-size:13px}
   #share-overlay .modal-actions{flex-wrap:wrap}
 
   /* ---------- toolbar ---------- */
-  .toolbar{display:flex;gap:10px;margin-bottom:14px}
+  .toolbar{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-bottom:12px}
   .search{
     flex:1;background:var(--surface);border:1px solid var(--border);
-    border-radius:var(--radius);padding:11px 16px;color:var(--text);
-    font-family:var(--font-main);font-size:14px;min-width:0;box-shadow:var(--shadow);
+    border-radius:12px;padding:10px 14px;color:var(--text);min-height:48px;
+    font-family:var(--font-main);font-size:16px;min-width:0;
   }
-  .search::placeholder{color:#AEB7C6}
+  .search::placeholder{color:var(--muted)}
   .search:focus{outline:2px solid var(--accent);outline-offset:-1px}
   .btn{
     border:1px solid var(--border);background:var(--surface);color:var(--text);
-    border-radius:var(--radius);padding:11px 16px;font-family:var(--font-main);
+    min-height:44px;border-radius:12px;padding:10px 14px;font-family:var(--font-main);
     font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;
-    transition:background .15s,border-color .15s,box-shadow .15s;box-shadow:var(--shadow);
+    transition:background .15s,border-color .15s;
   }
   .btn:hover{background:var(--surface-2)}
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -124,76 +105,83 @@
   .btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 
   /* ---------- filter chips ---------- */
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+  .chips:empty{display:none}
   .chip{
     border:1px solid var(--border);background:var(--surface);color:var(--muted);
-    border-radius:99px;padding:6px 15px;font-family:var(--font-main);
-    font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;
+    min-height:44px;max-width:100%;border-radius:99px;padding:8px 14px;font-family:var(--font-main);
+    font-size:13px;font-weight:500;cursor:pointer;transition:color .15s,background .15s,border-color .15s;
+    overflow-wrap:anywhere;
   }
   .chip:hover{color:var(--text);border-color:#C7D2E4}
   .chip.sel{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
   .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   /* ---------- groups & cards ---------- */
-  .group{margin-bottom:26px}
+  .group + .group{margin-top:26px}
   .group-head{
-    display:flex;align-items:center;gap:10px;margin-bottom:11px;padding:0 4px;
+    display:flex;align-items:center;gap:10px;margin-bottom:10px;
   }
   .group-name{
-    font-size:12px;letter-spacing:.12em;font-weight:600;
-    text-transform:uppercase;color:var(--muted);border-radius:8px;padding:2px 8px;
+    font-size:15px;font-weight:600;line-height:1.4;
+    color:var(--text);border-radius:6px;overflow-wrap:anywhere;min-width:0;
   }
   .group-name[contenteditable="true"]{cursor:text}
   .group-name:focus{outline:2px solid var(--accent);background:var(--surface);color:var(--text)}
-  .group-line{flex:1;height:1px;background:#DDE4EF}
-  .group-count{font-size:11px;font-weight:600;color:#AEB7C6}
+  .group-line{flex:1;height:1px;background:var(--border)}
+  .group-count{flex:none;padding:2px 8px;border-radius:99px;background:var(--accent-soft);
+    font-size:12px;font-weight:500;color:var(--accent);font-variant-numeric:tabular-nums}
 
-  .list{display:flex;flex-direction:column;gap:12px}
+  .list{display:flex;flex-direction:column;gap:8px}
   .card{
-    position:relative;display:block;background:var(--surface);
-    border:1px solid transparent;border-radius:var(--radius);
-    padding:17px 18px 16px 20px;text-decoration:none;color:inherit;
-    transition:transform .15s,border-color .15s,box-shadow .15s;
-    overflow:hidden;box-shadow:var(--shadow);
+    position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"link actions";
+    align-items:center;gap:8px 12px;padding:14px 12px;background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);transition:border-color .15s,box-shadow .15s;
   }
-  .card:hover{transform:translateY(-2px);border-color:var(--c,var(--accent));box-shadow:var(--shadow-lift)}
-  .card:focus-visible{outline:2px solid var(--c,var(--accent));outline-offset:2px}
-  .card-top{display:flex;align-items:center;gap:11px}
-  .dot{width:12px;height:12px;border-radius:50%;background:#fff;flex-shrink:0;
+  .card:hover{border-color:#9FB9AB;box-shadow:var(--shadow)}
+  .card:has(.card-link:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+  .card-link{
+    grid-area:link;display:grid;grid-template-columns:12px minmax(0,1fr);gap:10px;min-width:0;
+    text-decoration:none;color:inherit;border-radius:6px
+  }
+  .card-link::after{position:absolute;inset:0;content:"";border-radius:inherit}
+  .card-link:focus-visible{outline:none}
+  .card-link:hover .card-name{color:var(--accent)}
+  .dot{width:12px;height:12px;margin-top:5px;border-radius:50%;background:var(--surface);
     border:3px solid var(--c,var(--accent))}
-  .card-name{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .card-note{color:var(--muted);font-size:13px;margin-top:5px;padding-left:23px}
-  .card-views{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding-left:23px;font-size:11px;color:#627187}
+  .card-name{font-size:16px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+  .card-note{color:var(--muted);font-size:13px;line-height:1.5;margin-top:4px;overflow-wrap:anywhere}
+  .card-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .card-views{display:inline-flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
   .card-views svg{width:14px;height:14px}
-  .card-domain{font-size:11px;color:#AEB7C6;margin-top:7px;padding-left:23px;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card-domain{overflow-wrap:anywhere;min-width:0}
 
   /* manage controls */
-  .controls{display:none;position:absolute;top:12px;right:12px;gap:6px}
-  .manage-mode .controls{display:flex}
-  .manage-mode .card{padding-right:158px}
-  .card{padding-right:62px}
-  .manage-mode .card{padding-right:158px !important}
+  .card-actions,.controls{align-items:center;gap:8px}
+  .card-actions{grid-area:actions;display:flex;justify-self:end;position:relative;z-index:1}
+  .controls{display:none}
+  .manage-mode .controls,.shared-board .controls{display:flex}
+  .manage-mode .card{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"drag link" "actions actions"}
   .icon-btn{
-    width:32px;height:32px;border-radius:10px;border:1px solid var(--border);
+    width:44px;height:44px;flex:none;border-radius:10px;border:1px solid var(--border);
     background:var(--surface-2);color:var(--muted);cursor:pointer;font-size:14px;
     display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s,background .15s;
     font-family:var(--font-main);
   }
-  .icon-btn:hover{color:var(--text);border-color:#C7D2E4;background:#fff}
+  .icon-btn svg{width:18px;height:18px}
+  .icon-btn:hover{color:var(--accent);border-color:#9FB9AB;background:var(--accent-soft)}
   .icon-btn.del:hover{color:var(--danger);border-color:var(--danger)}
-  .icon-btn:focus-visible{outline:2px solid var(--accent)}
+  .icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   /* drag & drop */
   .drag-handle{
-    display:none;position:absolute;left:12px;top:50%;transform:translateY(-50%);
-    width:30px;height:42px;border-radius:10px;border:1px solid var(--border);
-    background:var(--surface-2);color:#AEB7C6;cursor:grab;touch-action:none;
+    grid-area:drag;display:none;position:relative;z-index:1;
+    width:44px;height:44px;border-radius:10px;border:1px solid var(--border);
+    background:var(--surface-2);color:var(--muted);cursor:grab;touch-action:none;
     align-items:center;justify-content:center;font-size:15px;user-select:none;
   }
   .drag-handle:active{cursor:grabbing;color:var(--accent);border-color:var(--accent)}
   .manage-mode .drag-handle{display:flex}
-  .manage-mode .card{padding-left:54px}
   .card.ghost{
     position:fixed;z-index:100;pointer-events:none;opacity:.95;
     transform:rotate(1.5deg);box-shadow:0 18px 44px rgba(30,50,90,.28);margin:0;
@@ -201,7 +189,6 @@
   .card.drag-src{opacity:.45;border:1px dashed #C7D2E4;box-shadow:none}
   .is-dragging{user-select:none;-webkit-user-select:none}
   .is-dragging .card{transition:none}
-  .is-dragging .card:hover{transform:none}
 
   .empty{
     text-align:center;padding:52px 20px;border:2px dashed #D6DEEA;
@@ -265,16 +252,36 @@
     .overlay{align-items:center;padding:20px}
     .modal{border-radius:24px}
   }
+  @media (min-width:640px){
+    .wrap{padding:48px 24px 88px}
+    header{grid-template-columns:auto minmax(0,1fr) auto;gap:24px;margin-bottom:28px;padding-bottom:24px}
+    .logo{width:128px}
+    .heading{padding-inline-start:24px}
+    .heading-meta{grid-column:auto;justify-content:flex-end;max-width:240px;padding-inline-start:0}
+    .card{padding:16px}
+    .manage-mode .card{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"drag link actions"}
+  }
+  @media (max-width:420px){
+    body:not(.shared-board) .search{flex-basis:100%}
+    .card{column-gap:8px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .card,.icon-btn,.btn,.chip,.toast{transition:none}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <img src="logo.png" alt="JERO Design Thinking" class="logo">
-    <div class="status-line"><span class="led"></span><span id="count-label">0 links · monitoring</span></div>
-    <div><h1 id="title">Work Hub</h1></div>
-    <div><span class="subtitle" id="subtitle">รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว</span></div>
-    <div><span class="sync-badge" id="sync-badge" aria-live="polite"></span></div>
+    <img src="logo.png" width="900" height="325" alt="JERO Design Thinking" class="logo">
+    <div class="heading">
+      <h1 id="title">Work Hub</h1>
+      <p class="subtitle" id="subtitle">รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว</p>
+    </div>
+    <div class="heading-meta">
+      <span id="count-label"></span>
+      <span class="sync-badge" id="sync-badge" aria-live="polite"></span>
+    </div>
   </header>
 
   <p class="empty" id="access-status" role="status">กำลังเปิด Work Hub…</p>
@@ -756,15 +763,19 @@
     const q = searchEl.value.trim().toLowerCase();
     const cats = categories();
     const bizLinks = state.links.filter(l=>l.biz===state.activeBiz);
+    const isCategoryShare = !isOwner && state.fixedCategory!==null;
 
     // filter chips
     chipsEl.innerHTML = '';
-    if(cats.length > 0){
+    if(cats.length > 0 && !isCategoryShare){
       const mk = (label, val)=>{
         const b = document.createElement('button');
-        b.className = 'chip' + ((activeFilter===val)?' sel':'');
+        const index = chipsEl.children.length;
+        const selected = activeFilter===val;
+        b.className = 'chip' + (selected?' sel':'');
+        b.setAttribute('aria-pressed', String(selected));
         b.textContent = label;
-        b.onclick = ()=>{ activeFilter = (activeFilter===val)? null : val; render(); };
+        b.onclick = ()=>{ activeFilter = selected ? null : val; render(); chipsEl.children[index]?.focus(); };
         chipsEl.appendChild(b);
       };
       mk('ทั้งหมด', null);
@@ -781,7 +792,8 @@
 
     const items = state.links.filter(match);
 
-    $('count-label').textContent = bizLinks.length + ' links · ' + cats.length + ' groups';
+    $('count-label').textContent = bizLinks.length + ' ลิงก์' +
+      (cats.length && !isCategoryShare ? ' · ' + cats.length + ' หมวด' : '');
     $('title').textContent = state.title;
     $('subtitle').textContent = state.subtitle;
     emptyEl.hidden = bizLinks.length !== 0;
@@ -802,11 +814,11 @@
       const g = document.createElement('div');
       g.className = 'group';
       g.dataset.cat = cat;
-      const showHead = cat !== '' || order.length > 1;
+      const showHead = !isCategoryShare && (cat !== '' || order.length > 1);
       if(showHead){
         const head = document.createElement('div');
         head.className = 'group-head';
-        const nameEl = document.createElement('span');
+        const nameEl = document.createElement('h2');
         nameEl.className = 'group-name';
         nameEl.textContent = cat === '' ? 'ยังไม่จัดหมวด' : cat;
         if(manageMode && cat !== ''){
@@ -838,6 +850,7 @@
         }
         const cnt = document.createElement('span'); cnt.className='group-count';
         cnt.textContent = map[cat].length;
+        cnt.setAttribute('aria-label', map[cat].length + ' ลิงก์');
         head.appendChild(cnt);
         g.appendChild(head);
       }
@@ -845,32 +858,41 @@
       const list = document.createElement('div');
       list.className = 'list';
       map[cat].forEach(l=>{
-        const a = document.createElement('a');
-        a.className = 'card';
-        a.href = normalizeUrl(l.url) || '#';
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.dataset.id = l.id;
-        a.style.setProperty('--c', l.color);
-        a.innerHTML =
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.dataset.id = l.id;
+        card.style.setProperty('--c', l.color);
+        const name = esc(l.name);
+        const id = esc(l.id);
+        card.innerHTML =
           '<span class="drag-handle" title="ลากเพื่อจัดลำดับหรือย้ายหมวด" aria-hidden="true">⠿</span>'+
-          '<div class="card-top"><span class="dot"></span><span class="card-name">'+esc(l.name)+'</span></div>'+
-          (l.note ? '<div class="card-note">'+esc(l.note)+'</div>' : '')+
-          '<div class="card-domain">'+esc(domain(l.url))+'</div>'+
-          '<span class="card-views" title="จำนวนเบราว์เซอร์ที่เปิดลิงก์" aria-label="จำนวนเบราว์เซอร์ที่เปิดลิงก์">'+
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.7"/></svg>'+
-            '<span class="view-count">'+(viewCounts[l.id] || 0)+'</span>'+
-          '</span>'+
-          '<button class="qr-btn" data-qr="'+esc(l.id)+'" title="แสดง QR Code" aria-label="แสดง QR Code ของ '+esc(l.name)+'">'+
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M20 20h1M17 17h4v4"/></svg>'+
-          '</button>'+
-          '<div class="controls">'+
-            (isOwner ? '<button class="icon-btn" data-act="up" data-id="'+esc(l.id)+'" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>'+
-            '<button class="icon-btn" data-act="down" data-id="'+esc(l.id)+'" title="เลื่อนลง" aria-label="เลื่อนลง">↓</button>' : '')+
-            '<button class="icon-btn" data-act="edit" data-id="'+esc(l.id)+'" title="แก้ไข" aria-label="แก้ไข">✎</button>'+
-            (isOwner ? '<button class="icon-btn del" data-act="del" data-id="'+esc(l.id)+'" title="ลบ" aria-label="ลบ">✕</button>' : '')+
+          '<a class="card-link" href="'+esc(normalizeUrl(l.url) || '#')+'" target="_blank" rel="noopener noreferrer">'+
+            '<span class="dot" aria-hidden="true"></span><div>'+
+              '<div class="card-name">'+name+'</div>'+
+              (l.note ? '<div class="card-note">'+esc(l.note)+'</div>' : '')+
+              '<div class="card-meta">'+
+                '<span class="card-domain">'+esc(domain(l.url))+'</span>'+
+                '<span class="card-views" title="จำนวนเบราว์เซอร์ที่เปิดลิงก์" aria-label="จำนวนเบราว์เซอร์ที่เปิดลิงก์">'+
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.7"/></svg>'+
+                  '<span class="view-count">'+(viewCounts[l.id] || 0)+'</span>'+
+                '</span>'+
+              '</div>'+
+            '</div>'+
+          '</a>'+
+          '<div class="card-actions">'+
+            '<button type="button" class="icon-btn qr-btn" data-qr="'+id+'" title="แสดง QR Code" aria-label="แสดง QR Code ของ '+name+'">'+
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M20 20h1M17 17h4v4"/></svg>'+
+            '</button>'+
+            '<div class="controls">'+
+              (isOwner ? '<button type="button" class="icon-btn" data-act="up" data-id="'+id+'" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>'+
+              '<button type="button" class="icon-btn" data-act="down" data-id="'+id+'" title="เลื่อนลง" aria-label="เลื่อนลง">↓</button>' : '')+
+              '<button type="button" class="icon-btn" data-act="edit" data-id="'+id+'" title="แก้ไข" aria-label="แก้ไข '+name+'">'+
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 4 4 4M4 20l4.7-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20Z"/></svg>'+
+              '</button>'+
+              (isOwner ? '<button type="button" class="icon-btn del" data-act="del" data-id="'+id+'" title="ลบ" aria-label="ลบ">✕</button>' : '')+
+            '</div>'+
           '</div>';
-        list.appendChild(a);
+        list.appendChild(card);
       });
       g.appendChild(list);
       groupsEl.appendChild(g);
@@ -1069,7 +1091,7 @@
     }
     const btn = e.target.closest('[data-act]');
     if(!btn){
-      if(!e.defaultPrevented) recordVisit(e.target.closest('.card'));
+      if(!e.defaultPrevented) recordVisit(e.target.closest('.card-link')?.closest('.card'));
       return;
     }
     e.preventDefault(); e.stopPropagation();
@@ -1099,8 +1121,8 @@
     save();
   });
   groupsEl.addEventListener('auxclick', e=>{
-    if(e.button===1 && !e.target.closest('button') && !e.defaultPrevented){
-      recordVisit(e.target.closest('.card'));
+    if(e.button===1 && !e.defaultPrevented){
+      recordVisit(e.target.closest('.card-link')?.closest('.card'));
     }
   });
 
