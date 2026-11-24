@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
 <title>Work Hub — ศูนย์รวมลิงก์มอนิเตอร์</title>
 <meta name="theme-color" content="#EDF1F7">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 <style>
   :root{
     --bg:#EDF1F7;
@@ -91,10 +92,15 @@
   .group-move .icon-btn{width:27px;height:27px;font-size:12px;border-radius:8px}
 
   /* ---------- business picker ---------- */
-  .biz-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:14px}
+  .biz-bar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin-bottom:14px}
   .biz-bar .biz-select{min-width:0;color:var(--accent);text-overflow:ellipsis}
   .biz-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
-  .biz-actions[hidden]{display:none}
+  .biz-bar[hidden],.biz-actions[hidden]{display:none}
+  .shared-board .card{padding-right:98px}
+  .shared-board .card .controls{display:flex;right:13px}
+  .shared-board .qr-btn{right:49px}
+  #share-url{font-size:13px}
+  #share-overlay .modal-actions{flex-wrap:wrap}
 
   /* ---------- toolbar ---------- */
   .toolbar{display:flex;gap:10px;margin-bottom:14px}
@@ -269,8 +275,11 @@
     <div><span class="sync-badge" id="sync-badge" aria-live="polite"></span></div>
   </header>
 
-  <div class="biz-bar">
+  <p class="empty" id="access-status" role="status">กำลังเปิด Work Hub…</p>
+  <main id="board" hidden>
+  <div class="biz-bar" id="business-picker">
     <select class="btn biz-select" id="biz-select" aria-label="เลือกธุรกิจ"></select>
+    <button class="btn" id="biz-share" type="button">แชร์</button>
     <button class="btn" id="biz-add" type="button">+ ธุรกิจ</button>
     <div class="biz-actions" id="biz-actions" hidden>
       <button class="btn" id="biz-rename" type="button">เปลี่ยนชื่อธุรกิจ</button>
@@ -289,9 +298,10 @@
   <div id="groups"></div>
 
   <div class="empty" id="empty" hidden>
-    <p>ยังไม่มีลิงก์ในบอร์ดนี้<br>เริ่มเพิ่มลิงก์แรกเพื่อรวมทุกอย่างไว้ที่เดียว</p>
+    <p id="empty-message">ยังไม่มีลิงก์ในบอร์ดนี้</p>
     <button class="btn btn-amber" id="empty-add">+ เพิ่มลิงก์แรก</button>
   </div>
+  </main>
 </div>
 
 <!-- qr modal -->
@@ -320,11 +330,11 @@
       <label for="f-url">URL</label>
       <input id="f-url" type="url" placeholder="https://…" inputmode="url">
     </div>
-    <div class="field">
+    <div class="field" id="link-business-field">
       <label for="f-biz">ธุรกิจ / งาน</label>
       <select id="f-biz"></select>
     </div>
-    <div class="field">
+    <div class="field" id="link-category-field">
       <label for="f-cat">หมวดหมู่ (พิมพ์ชื่อใหม่เพื่อสร้างหมวด)</label>
       <input id="f-cat" type="text" placeholder="เช่น งาน, เซิร์ฟเวอร์, การเงิน" maxlength="30" list="cat-list">
       <datalist id="cat-list"></datalist>
@@ -362,24 +372,37 @@
   </div>
 </div>
 
+<div class="overlay" id="share-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="share-title">
+    <h2 id="share-title">แชร์</h2>
+    <div class="field">
+      <label for="share-scope">ขอบเขตที่จะแชร์</label>
+      <select id="share-scope"></select>
+    </div>
+    <div class="field" id="share-url-field" hidden>
+      <label for="share-url">ลิงก์แชร์</label>
+      <input id="share-url" type="url" readonly>
+    </div>
+    <p class="form-err" id="share-error" role="alert"></p>
+    <div class="modal-actions">
+      <button class="btn" id="share-close" type="button">ปิด</button>
+      <button class="btn" id="share-revoke" type="button" hidden>ปิดลิงก์แชร์</button>
+      <button class="btn btn-amber" id="share-primary" type="button">สร้างลิงก์แชร์</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 (function(){
   'use strict';
   const COLORS = ['#0F6A4F','#C9A468','#4C7DF7','#22B8A8','#F59E4C','#8B5CF6','#F16A85','#94A3B8'];
-  const KEY = 'linkhub-data-v2';
-  const SYNC_KEY = 'linkhub-sync-v1';
   const UNCAT = '';
-
-  // ============================================================
-  // *** ตั้งค่าซิงก์ Google Sheet ตรงนี้ (แก้ 2 บรรทัดล่างนี้) ***
-  // SYNC_URL  = Web app URL จาก Apps Script (ลงท้าย /exec)
-  // SYNC_TOKEN = รหัสลับ ต้องตรงกับ SYNC_TOKEN ในสคริปต์
-  // ============================================================
   const SYNC_URL   = 'https://script.google.com/macros/s/AKfycbwE3YIDae0I0mvwo_G45qCsORC4T19jv9lAjuzDl4jWdtp-D6LkCzpyypq_ZhpooIs0/exec';
-  const SYNC_TOKEN = 'workhub-7xK9mQ2pL8vR4aN6';
-
+  const accessParams = new URLSearchParams(location.hash.slice(1));
+  const isOwner = accessParams.has('owner') && !accessParams.has('share');
+  const accessKey = accessParams.get(isOwner ? 'owner' : 'share') || '';
   let state = {
     title: 'Work Hub',
     subtitle: 'รวมทุกลิงก์ที่ต้องเช็กไว้ที่เดียว',
@@ -404,147 +427,113 @@
   let editingId = null;
   let selectedColor = COLORS[0];
   let activeFilter = null; // null = ทั้งหมด
-  let storageOk = true;
-  let syncConfig = {url:'', token:'', lastSyncedAt:0};
-  let applyingRemote = false;
-  let syncInFlight = false;
-  let syncPending = false;
-  let stateRevision = 0;
+  let revision = '';
+  let shares = [];
+  let writing = false;
+  let pendingSave = false;
+  let saveConflict = false;
+  let loading = false;
 
   const $ = id => document.getElementById(id);
   const groupsEl=$('groups'), emptyEl=$('empty'), overlay=$('overlay'),
         searchEl=$('search'), toastEl=$('toast'), chipsEl=$('chips');
 
-  /* ---------- storage (localStorage) ---------- */
-  function load(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      if(raw){
-        const d = JSON.parse(raw);
-        if(d && Array.isArray(d.links)) state = Object.assign(state, d);
-      }
-      const savedSync = localStorage.getItem(SYNC_KEY);
-      if(savedSync) syncConfig = Object.assign(syncConfig, JSON.parse(savedSync));
-    }catch(e){ storageOk = false; }
-    // ค่าที่ฝังในไฟล์มาก่อนเสมอ — เครื่องใหม่ก็ซิงก์ได้ทันทีไม่ต้องตั้งค่า
-    if(SYNC_URL) syncConfig.url = SYNC_URL;
-    if(SYNC_TOKEN) syncConfig.token = SYNC_TOKEN;
-    migrate();
-  }
-  function save(){
-    try{
-      localStorage.setItem(KEY, JSON.stringify(state));
-    }catch(e){
-      if(storageOk){ storageOk=false; toast('บันทึกไม่สำเร็จ — พื้นที่เก็บข้อมูลของเบราว์เซอร์อาจเต็มหรือถูกปิดใช้งาน'); }
-    }
-    if(!applyingRemote){ stateRevision++; syncToSheet(); }
-  }
-
-  /* ---------- Google Sheet sync ---------- */
-  function saveSyncConfig(){ localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig)); }
   function syncStatus(message, kind){
     const el = $('sync-badge');
-    if(!el) return;
-    el.textContent = message ? '☁ ' + message : '';
+    el.textContent = message;
     el.className = 'sync-badge' + (kind ? ' '+kind : '');
   }
-  async function syncRequest(action, payload){
-    if(!syncConfig.url || !syncConfig.token) throw new Error('missing configuration');
-    const params = Object.assign({action, token:syncConfig.token}, payload || {});
-    if(action === 'get') return jsonpRequest(params);
-    // A regular form POST is cross-origin-safe. Unlike fetch(), it is not blocked
-    // by Apps Script's missing CORS headers; the result is checked by a later JSONP read.
-    return postToSheet(params);
-  }
-  function postToSheet(params){
-    const body = new URLSearchParams(params);
-    if(navigator.sendBeacon && navigator.sendBeacon(syncConfig.url, body)){
-      return Promise.resolve({ok:true});
-    }
-    return new Promise(resolve=>{
-      const frameName = '__workHubPost'+Date.now()+Math.floor(Math.random()*100000);
-      const frame = document.createElement('iframe');
-      frame.name=frameName; frame.hidden=true;
-      const form = document.createElement('form');
-      form.method='POST'; form.action=syncConfig.url; form.target=frameName; form.hidden=true;
-      Object.keys(params).forEach(key=>{
-        const input=document.createElement('input'); input.name=key; input.value=params[key]; form.appendChild(input);
-      });
-      document.body.append(frame, form);
-      form.submit();
-      setTimeout(()=>{ form.remove(); frame.remove(); resolve({ok:true}); }, 1400);
+
+  async function request(action, payload={}){
+    const body = new URLSearchParams({action, key:accessKey, ...payload});
+    const response = await fetch(SYNC_URL, {
+      method:'POST', body, credentials:'omit', referrerPolicy:'no-referrer',
+      signal:AbortSignal.timeout(20000)
     });
+    if(!response.ok) throw new Error('network');
+    const result = await response.json();
+    if(!result.ok) throw new Error(result.error || 'network');
+    return result;
   }
-  function jsonpRequest(params){
-    return new Promise((resolve, reject)=>{
-      const callback = '__workHubJsonp'+Date.now()+Math.floor(Math.random()*100000);
-      const query = new URLSearchParams(Object.assign({}, params, {callback}));
-      const script = document.createElement('script');
-      const cleanup = ()=>{ delete window[callback]; script.remove(); };
-      const timer = setTimeout(()=>{ cleanup(); reject(new Error('หมดเวลารอการตอบกลับจาก Google Sheet')); }, 15000);
-      window[callback] = result=>{
-        clearTimeout(timer); cleanup();
-        if(!result || !result.ok) reject(new Error((result && result.error) || 'sync failed'));
-        else resolve(result);
-      };
-      script.onerror = ()=>{ clearTimeout(timer); cleanup(); reject(new Error('เชื่อมต่อ Google Apps Script ไม่ได้')); };
-      script.src = syncConfig.url + (syncConfig.url.includes('?') ? '&' : '?') + query.toString();
-      document.head.appendChild(script);
-    });
+
+  function applyView(result){
+    if(isOwner !== Array.isArray(result.shares)) throw new Error('access');
+    const previousBusiness = state.activeBiz;
+    state = result.data;
+    if(state.bizs.includes(previousBusiness)) state.activeBiz = previousBusiness;
+    migrate();
+    revision = result.revision;
+    shares = result.shares || [];
+    render();
+    $('access-status').hidden = true;
+    $('board').hidden = false;
   }
-  async function pullFromSheet(interactive){
-    if(!syncConfig.url || !syncConfig.token) return;
-    if(interactive) syncStatus('กำลังเชื่อมต่อกับ Google Sheet…');
+
+  async function readBoard(){
+    if(loading || writing || pendingSave || saveConflict || overlay.classList.contains('open') ||
+       $('biz-overlay').classList.contains('open') || $('share-overlay').classList.contains('open')) return;
+    loading = true;
+    const startingRevision = revision;
     try{
-      const result = await syncRequest('get');
-      if(result.data && Array.isArray(result.data.links)){
-        applyingRemote = true;
-        const prevActive = state.activeBiz;
-        state = Object.assign({title:'Work Hub', subtitle:'', bizs:[], activeBiz:'', links:[]}, result.data);
-        migrate();
-        if(state.bizs.includes(prevActive)) state.activeBiz = prevActive;
-        localStorage.setItem(KEY, JSON.stringify(state));
-        applyingRemote = false;
-        render();
-        syncConfig.lastSyncedAt = Date.now(); saveSyncConfig();
-        syncStatus('ซิงก์กับ Google Sheet แล้ว', 'ok');
-        return 'remote';
+      const result = await request('read');
+      if(revision===startingRevision && !writing && !pendingSave && !saveConflict && !overlay.classList.contains('open') &&
+         !$('biz-overlay').classList.contains('open') && !$('share-overlay').classList.contains('open')){
+        if(revision !== result.revision || JSON.stringify(shares) !== JSON.stringify(result.shares || [])){
+          applyView(result);
+        }
+        syncStatus('', '');
+      }
+    }catch(err){
+      if(err.message==='access'){
+        state.links = [];
+        revision = '';
+        shares = [];
+        groupsEl.replaceChildren();
+        bizSelect.replaceChildren();
+        closeModal();
+        closeQr();
+        $('board').hidden = true;
+        $('count-label').textContent = '';
+        $('title').textContent = 'Work Hub';
+        $('subtitle').textContent = '';
+        $('access-status').textContent = '????????????????????????????????';
+        $('access-status').hidden = false;
+        syncStatus('', '');
+      }else if($('board').hidden){
+        $('access-status').textContent = '???? Work Hub ????????? ?????????????????????';
       }else{
-        syncStatus('Sheet ยังว่าง — จะอัปโหลดข้อมูลจากเครื่องนี้', 'ok');
-        return 'empty';
+        syncStatus('???????????????', 'err');
       }
-    }catch(err){
-      syncStatus('เชื่อมต่อ Google Sheet ไม่ได้ — ใช้ข้อมูลในเครื่องไปก่อน', 'err');
-      console.warn('Work Hub sync:', err);
-      return 'error';
-    }
-  }
-  async function syncToSheet(){
-    if(!syncConfig.url || !syncConfig.token) return;
-    if(syncInFlight){ syncPending = true; return; }
-    syncInFlight = true;
-    const sentRevision = stateRevision;
-    syncStatus('กำลังซิงก์ขึ้น Google Sheet…');
-    try{
-      await syncRequest('save', {data:JSON.stringify(state)});
-      syncConfig.lastSyncedAt=Date.now(); saveSyncConfig();
-      syncStatus('ซิงก์กับ Google Sheet แล้ว', 'ok');
-      setTimeout(()=>{ if(!syncInFlight) pullFromSheet(false); }, 1000);
-      return true;
-    }catch(err){
-      syncStatus('ซิงก์ไม่สำเร็จ — จะลองใหม่เมื่อบันทึกครั้งถัดไป', 'err');
-      console.warn('Work Hub sync:', err);
-      return false;
     }finally{
-      syncInFlight = false;
-      if(syncPending || stateRevision > sentRevision){
-        syncPending = false;
-        syncToSheet();
-      }
+      loading = false;
     }
   }
 
-  /* ---------- helpers ---------- */
+  async function save(){
+    if(!isOwner || !revision || saveConflict) return;
+    pendingSave = true;
+    if(writing) return;
+    writing = true;
+    try{
+      while(pendingSave){
+        pendingSave = false;
+        syncStatus('????????????');
+        const result = await request('save', {revision, data:JSON.stringify(state)});
+        revision = result.revision;
+        shares = result.shares;
+        syncStatus('??????????', 'ok');
+      }
+    }catch(err){
+      saveConflict = err.message==='conflict';
+      pendingSave = !saveConflict;
+      syncStatus(saveConflict
+        ? '??????????????????????? ????????????????????????????????'
+        : '??????????????? ??????????????????????????', 'err');
+    }finally{
+      writing = false;
+    }
+  }
+
   function toast(msg){
     toastEl.textContent = msg;
     toastEl.classList.add('show');
@@ -573,13 +562,99 @@
     return seen;
   }
 
+  /* ---------- share dialog ---------- */
+  const shareOverlay = $('share-overlay');
+  const scopeSelect = $('share-scope');
+  const shareUrl = $('share-url');
+  const sharePrimary = $('share-primary');
+  const shareRevoke = $('share-revoke');
+  let shareCategories = [];
+  let shareBusy = false;
+
+  function selectedShare(){
+    const category = shareCategories[Number(scopeSelect.value)];
+    return shares.find(share=>share.business===state.activeBiz && share.category===category);
+  }
+
+  function renderShare(){
+    const share = selectedShare();
+    shareUrl.value = share
+      ? new URL('#share='+share.key, location.origin+location.pathname).href
+      : '';
+    $('share-url-field').hidden = !share;
+    shareRevoke.hidden = !share;
+    sharePrimary.textContent = share ? 'คัดลอกลิงก์' : 'สร้างลิงก์แชร์';
+    $('share-error').style.display = 'none';
+  }
+
+  async function changeShare(action){
+    if(shareBusy) return;
+    const category = shareCategories[Number(scopeSelect.value)];
+    const error = $('share-error');
+    shareBusy = true;
+    scopeSelect.disabled = sharePrimary.disabled = shareRevoke.disabled = true;
+    try{
+      const payload = {business:state.activeBiz};
+      if(category!==null) payload.category = category;
+      const result = await request(action, payload);
+      shares = result.shares;
+      renderShare();
+      if(action==='shareRevoke') toast('ปิดลิงก์แชร์แล้ว');
+    }catch(err){
+      error.textContent = 'เปลี่ยนลิงก์แชร์ไม่สำเร็จ กรุณาลองใหม่';
+      error.style.display = 'block';
+    }finally{
+      shareBusy = false;
+      scopeSelect.disabled = sharePrimary.disabled = shareRevoke.disabled = false;
+    }
+  }
+
+  $('biz-share').onclick = ()=>{
+    if(writing || pendingSave || saveConflict){
+      toast('กรุณาบันทึกการเปลี่ยนแปลงของธุรกิจก่อนแชร์');
+      return;
+    }
+    shareCategories = [null, ...categories()];
+    if(state.links.some(link=>link.biz===state.activeBiz && !(link.cat||'').trim())) shareCategories.push(UNCAT);
+    scopeSelect.replaceChildren(...shareCategories.map((category,index)=>
+      new Option(category===null ? 'ทั้งธุรกิจ' : 'หมวด: '+(category||'ยังไม่จัดหมวด'), index)));
+    scopeSelect.value = String(Math.max(0,shareCategories.indexOf(activeFilter)));
+    $('share-title').textContent = 'แชร์ '+state.activeBiz;
+    renderShare();
+    shareOverlay.classList.add('open');
+    scopeSelect.focus();
+  };
+  scopeSelect.onchange = renderShare;
+  shareRevoke.onclick = ()=>changeShare('shareRevoke');
+  sharePrimary.onclick = async ()=>{
+    if(!selectedShare()){
+      await changeShare('shareCreate');
+      return;
+    }
+    try{
+      await navigator.clipboard.writeText(shareUrl.value);
+      toast('คัดลอกลิงก์แชร์แล้ว');
+    }catch(err){
+      shareUrl.focus();
+      shareUrl.select();
+      toast('เลือกลิงก์แล้ว กดคัดลอกเพื่อแชร์');
+    }
+  };
+  $('share-close').onclick = ()=>{
+    if(shareBusy) return;
+    shareOverlay.classList.remove('open');
+    $('biz-share').focus();
+  };
+  shareOverlay.addEventListener('click', e=>{
+    if(e.target===shareOverlay) $('share-close').click();
+  });
+
   /* ---------- business picker ---------- */
   const bizSelect = $('biz-select');
   bizSelect.addEventListener('change', ()=>{
     state.activeBiz = bizSelect.value;
     activeFilter = null;
     render();
-    save();
   });
   $('biz-add').onclick = ()=>openBizModal('add');
   $('biz-rename').onclick = ()=>openBizModal('rename', state.activeBiz);
@@ -645,7 +720,7 @@
 
     // group items
     const order = [];
-    const map = {};
+    const map = Object.create(null);
     items.forEach(l=>{
       const c = (l.cat||'').trim();
       if(!(c in map)){ map[c]=[]; order.push(c); }
@@ -703,7 +778,7 @@
       map[cat].forEach(l=>{
         const a = document.createElement('a');
         a.className = 'card';
-        a.href = l.url;
+        a.href = normalizeUrl(l.url) || '#';
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
         a.dataset.id = l.id;
@@ -713,14 +788,14 @@
           '<div class="card-top"><span class="dot"></span><span class="card-name">'+esc(l.name)+'</span></div>'+
           (l.note ? '<div class="card-note">'+esc(l.note)+'</div>' : '')+
           '<div class="card-domain">'+esc(domain(l.url))+'</div>'+
-          '<button class="qr-btn" data-qr="'+l.id+'" title="แสดง QR Code" aria-label="แสดง QR Code ของ '+esc(l.name)+'">'+
+          '<button class="qr-btn" data-qr="'+esc(l.id)+'" title="แสดง QR Code" aria-label="แสดง QR Code ของ '+esc(l.name)+'">'+
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M20 20h1M17 17h4v4"/></svg>'+
           '</button>'+
           '<div class="controls">'+
-            '<button class="icon-btn" data-act="up" data-id="'+l.id+'" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>'+
-            '<button class="icon-btn" data-act="down" data-id="'+l.id+'" title="เลื่อนลง" aria-label="เลื่อนลง">↓</button>'+
-            '<button class="icon-btn" data-act="edit" data-id="'+l.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>'+
-            '<button class="icon-btn del" data-act="del" data-id="'+l.id+'" title="ลบ" aria-label="ลบ">✕</button>'+
+            (isOwner ? '<button class="icon-btn" data-act="up" data-id="'+esc(l.id)+'" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>'+
+            '<button class="icon-btn" data-act="down" data-id="'+esc(l.id)+'" title="เลื่อนลง" aria-label="เลื่อนลง">↓</button>' : '')+
+            '<button class="icon-btn" data-act="edit" data-id="'+esc(l.id)+'" title="แก้ไข" aria-label="แก้ไข">✎</button>'+
+            (isOwner ? '<button class="icon-btn del" data-act="del" data-id="'+esc(l.id)+'" title="ลบ" aria-label="ลบ">✕</button>' : '')+
           '</div>';
         list.appendChild(a);
       });
@@ -762,12 +837,14 @@
     });
   }
   function openModal(link){
+    if(!isOwner && (!link || writing)) return;
     editingId = link ? link.id : null;
     $('modal-title').textContent = link ? 'แก้ไขลิงก์' : 'เพิ่มลิงก์';
     $('f-name').value = link ? link.name : '';
     $('f-url').value  = link ? link.url  : '';
     $('f-note').value = link ? (link.note||'') : '';
     $('f-cat').value  = link ? (link.cat||'') : (activeFilter && activeFilter!==UNCAT ? activeFilter : '');
+    $('link-category-field').hidden = !isOwner && state.fixedCategory!==null;
     const bsel = $('f-biz');
     bsel.innerHTML = state.bizs.map(b=>'<option value="'+esc(b)+'">'+esc(b)+'</option>').join('');
     bsel.value = link ? link.biz : state.activeBiz;
@@ -780,7 +857,7 @@
   }
   function closeModal(){ overlay.classList.remove('open'); }
 
-  function submit(){
+  async function submit(){
     const name = $('f-name').value.trim();
     const url  = normalizeUrl($('f-url').value);
     const note = $('f-note').value.trim();
@@ -789,6 +866,32 @@
     const err = $('form-err');
     if(!name){ err.textContent='กรุณาใส่ชื่อปุ่ม'; err.style.display='block'; return; }
     if(!url){ err.textContent='URL ไม่ถูกต้อง — ลองใส่ในรูปแบบ https://example.com'; err.style.display='block'; return; }
+
+    if(!isOwner){
+      if(!editingId || writing) return;
+      writing = true;
+      $('save-btn').disabled = true;
+      try{
+        const fields = {name,url,note,cat,color:selectedColor};
+        const result = await request('edit',{id:editingId,revision,data:JSON.stringify(fields)});
+        closeModal();
+        applyView(result);
+        toast('แก้ไขลิงก์แล้ว');
+      }catch(error){
+        if(error.message==='conflict' || error.message==='access'){
+          closeModal();
+          toast('รายการมีการเปลี่ยนแปลง กรุณาเปิดใหม่แล้วลองอีกครั้ง');
+        }else{
+          err.textContent='บันทึกไม่สำเร็จ กรุณาตรวจข้อมูลแล้วลองใหม่';
+          err.style.display='block';
+        }
+      }finally{
+        writing = false;
+        $('save-btn').disabled = false;
+        if(!overlay.classList.contains('open')) readBoard();
+      }
+      return;
+    }
 
     if(editingId){
       const l = state.links.find(x=>x.id===editingId);
@@ -849,6 +952,10 @@
   $('biz-save-btn').onclick = submitBiz;
   bizOverlay.addEventListener('click', e=>{ if(e.target===bizOverlay) closeBizModal(); });
   document.addEventListener('keydown', e=>{
+    if(shareOverlay.classList.contains('open')){
+      if(e.key==='Escape') $('share-close').click();
+      return;
+    }
     if($('qr-overlay').classList.contains('open')){
       if(e.key==='Escape') closeQr();
       return;
@@ -894,6 +1001,7 @@
     const i = state.links.findIndex(l=>l.id===id);
     if(i<0) return;
     const act = btn.dataset.act;
+    if(!isOwner && act!=='edit') return;
     const cat = (state.links[i].cat||'').trim();
     if(act==='del'){
       const name = state.links[i].name;
@@ -929,7 +1037,7 @@
     const j = i + dir;
     if(i < 0 || j < 0 || j >= order.length) return;
     [order[i], order[j]] = [order[j], order[i]];
-    const blocks = {};
+    const blocks = Object.create(null);
     order.forEach(c=>{ blocks[c] = []; });
     state.links.forEach(l=>{ if(inBiz(l)) blocks[(l.cat||'').trim()].push(l); });
     const reordered = order.reduce((acc,c)=>acc.concat(blocks[c]), []);
@@ -1089,12 +1197,19 @@
   };
 
   /* ---------- init ---------- */
-  load();
-  render();
-  if(syncConfig.url && syncConfig.token){
-    pullFromSheet(false);
-    setInterval(()=>{ if(!syncInFlight) pullFromSheet(false); }, 15000);
-    window.addEventListener('focus', ()=>{ if(!syncInFlight) pullFromSheet(false); });
+  document.body.classList.toggle('shared-board', !isOwner);
+  $('business-picker').hidden = !isOwner;
+  $('manage-btn').hidden = !isOwner;
+  $('add-btn').hidden = !isOwner;
+  $('empty-add').hidden = !isOwner;
+  $('link-business-field').hidden = !isOwner;
+  if(/^[a-f0-9]{64}$/.test(accessKey)){
+    readBoard();
+    setInterval(readBoard, 15000);
+    window.addEventListener('focus', readBoard);
+  }else{
+    $('count-label').textContent = '';
+    $('access-status').textContent = '???????????????????????????????????????????????';
   }
 })();
 </script>
