@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 <style>
   :root{
     --bg:#F2F5F3;
@@ -338,7 +338,7 @@
     </div>
     <div class="field">
       <label for="f-url">URL</label>
-      <input id="f-url" type="url" placeholder="https://…" inputmode="url">
+      <input id="f-url" type="url" placeholder="https://…" inputmode="url" maxlength="4096">
     </div>
     <div class="field" id="link-business-field">
       <label for="f-biz">ธุรกิจ / งาน</label>
@@ -438,6 +438,7 @@
   }
   let manageMode = false;
   let editingId = null;
+  let addingId = null;
   let selectedColor = COLORS[0];
   let activeFilter = null; // null = ทั้งหมด
   let revision = '';
@@ -450,6 +451,7 @@
   let pendingSave = false;
   let saveConflict = false;
   let loading = false;
+  let lastRefresh = 0;
 
   const $ = id => document.getElementById(id);
   const groupsEl=$('groups'), emptyEl=$('empty'), overlay=$('overlay'),
@@ -494,28 +496,27 @@
     migrate();
     revision = result.revision;
     shares = result.shares || [];
-    const updatedViews = Object.create(null);
-    for(const link of state.links){
-      updatedViews[link.id] = Math.max(viewCounts[link.id] || 0, Number(result.views?.[link.id]) || 0);
-    }
-    viewCounts = updatedViews;
+    applyCounts(result.views);
     render();
     $('access-status').hidden = true;
     $('board').hidden = false;
   }
 
   async function readBoard(){
-    if(loading || writing || pendingSave || saveConflict || overlay.classList.contains('open') ||
+    if(document.hidden || loading || writing || pendingSave || saveConflict || overlay.classList.contains('open') ||
        $('biz-overlay').classList.contains('open') || $('share-overlay').classList.contains('open')) return;
     loading = true;
+    lastRefresh = Date.now();
     const startingRevision = revision;
     try{
       const result = await request('read');
       if(revision===startingRevision && !writing && !pendingSave && !saveConflict && !overlay.classList.contains('open') &&
          !$('biz-overlay').classList.contains('open') && !$('share-overlay').classList.contains('open')){
-        if(revision !== result.revision || JSON.stringify(shares) !== JSON.stringify(result.shares || []) ||
-           JSON.stringify(viewCounts) !== JSON.stringify(result.views || {})){
+        if(revision !== result.revision){
           applyView(result);
+        }else{
+          shares = result.shares || [];
+          applyCounts(result.views);
         }
         syncStatus('', '');
       }
@@ -593,6 +594,18 @@
   }
   function esc(s){
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function applyCounts(views){
+    const counts = Object.create(null);
+    for(const link of state.links){
+      counts[link.id] = Math.max(viewCounts[link.id] || 0, Number(views?.[link.id]) || 0);
+    }
+    viewCounts = counts;
+    for(const card of groupsEl.querySelectorAll('.card')){
+      const count = card.querySelector('.view-count');
+      const value = String(viewCounts[card.dataset.id] || 0);
+      if(count.textContent!==value) count.textContent = value;
+    }
   }
   async function recordVisit(card){
     const id = card?.dataset.id;
@@ -932,14 +945,16 @@
     });
   }
   function openModal(link){
-    if(!isOwner && (!link || writing)) return;
+    if(!isOwner && writing) return;
     editingId = link ? link.id : null;
+    addingId = !isOwner && !link ? crypto.randomUUID().replace(/-/g,'') : null;
     $('modal-title').textContent = link ? 'แก้ไขลิงก์' : 'เพิ่มลิงก์';
     $('f-name').value = link ? link.name : '';
     $('f-url').value  = link ? link.url  : '';
     $('f-note').value = link ? (link.note||'') : '';
-    $('f-cat').value  = link ? (link.cat||'') : (activeFilter && activeFilter!==UNCAT ? activeFilter : '');
-    $('link-category-field').hidden = !isOwner && state.fixedCategory!==null;
+    const fixedCategory = isOwner ? null : state.fixedCategory;
+    $('f-cat').value = fixedCategory ?? (link ? (link.cat||'') : (activeFilter || ''));
+    $('link-category-field').hidden = fixedCategory!==null && fixedCategory!==undefined;
     const bsel = $('f-biz');
     bsel.innerHTML = state.bizs.map(b=>'<option value="'+esc(b)+'">'+esc(b)+'</option>').join('');
     bsel.value = link ? link.biz : state.activeBiz;
@@ -963,18 +978,21 @@
     if(!url){ err.textContent='URL ไม่ถูกต้อง — ลองใส่ในรูปแบบ https://example.com'; err.style.display='block'; return; }
 
     if(!isOwner){
-      if(!editingId || writing) return;
+      if((!editingId && !addingId) || writing) return;
+      const action = editingId ? 'edit' : 'add';
+      let reloadBoard = false;
       writing = true;
       $('save-btn').disabled = true;
       try{
         const fields = {name,url,note,cat,color:selectedColor};
-        const result = await request('edit',{id:editingId,revision,data:JSON.stringify(fields)});
+        const result = await request(action,{id:editingId || addingId,revision,data:JSON.stringify(fields)});
         closeModal();
         applyView(result);
-        toast('แก้ไขลิงก์แล้ว');
+        toast(action==='edit' ? 'แก้ไขลิงก์แล้ว' : 'เพิ่มลิงก์แล้ว');
       }catch(error){
         if(error.message==='conflict' || error.message==='access'){
           closeModal();
+          reloadBoard = true;
           toast('รายการมีการเปลี่ยนแปลง กรุณาเปิดใหม่แล้วลองอีกครั้ง');
         }else{
           err.textContent='บันทึกไม่สำเร็จ กรุณาตรวจข้อมูลแล้วลองใหม่';
@@ -983,7 +1001,7 @@
       }finally{
         writing = false;
         $('save-btn').disabled = false;
-        if(!overlay.classList.contains('open')) readBoard();
+        if(reloadBoard) readBoard();
       }
       return;
     }
@@ -1245,12 +1263,17 @@
   /* ---------- QR code ---------- */
   const qrOverlay = $('qr-overlay');
   let qrLink = null;
-  function openQr(l){
+  const documentReady = new Promise(resolve=>document.addEventListener('DOMContentLoaded', resolve, {once:true}));
+  async function openQr(l){
     qrLink = l;
     $('qr-name').textContent = l.name;
     $('qr-url').textContent = l.url;
     const box = $('qr-box');
-    box.innerHTML = '';
+    box.textContent = 'กำลังโหลด QR Code…';
+    qrOverlay.classList.add('open');
+    if(typeof QRCode === 'undefined') await documentReady;
+    if(qrLink!==l) return;
+    box.textContent = '';
     if(typeof QRCode !== 'undefined'){
       new QRCode(box, {
         text: l.url,
@@ -1263,7 +1286,6 @@
     }else{
       box.innerHTML = '<div class="qr-fail">สร้าง QR ไม่ได้ (โหลดไลบรารีไม่สำเร็จ — เช็กอินเทอร์เน็ตแล้วรีเฟรช)<br><br>'+esc(l.url)+'</div>';
     }
-    qrOverlay.classList.add('open');
   }
   function closeQr(){ qrOverlay.classList.remove('open'); qrLink = null; }
   $('qr-close-btn').onclick = closeQr;
@@ -1300,11 +1322,12 @@
   };
 
   /* ---------- init ---------- */
+  function refreshWhenStale(){
+    if(Date.now()-lastRefresh >= 12000) readBoard();
+  }
   document.body.classList.toggle('shared-board', !isOwner);
   $('business-picker').hidden = !isOwner;
   $('manage-btn').hidden = !isOwner;
-  $('add-btn').hidden = !isOwner;
-  $('empty-add').hidden = !isOwner;
   $('link-business-field').hidden = !isOwner;
   window.addEventListener('hashchange', ()=>location.reload());
   window.addEventListener('storage', e=>{
@@ -1314,8 +1337,9 @@
   });
   if(/^[a-f0-9]{64}$/.test(accessKey)){
     readBoard();
-    setInterval(readBoard, 15000);
-    window.addEventListener('focus', readBoard);
+    setInterval(readBoard, 45000);
+    window.addEventListener('focus', refreshWhenStale);
+    document.addEventListener('visibilitychange', refreshWhenStale);
   }else{
     $('count-label').textContent = '';
     $('access-status').textContent = isShare

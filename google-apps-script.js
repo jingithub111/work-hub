@@ -10,6 +10,9 @@ const OWNER_KEY = 'workhub.owner';
 const BOOK_ID = 'workhub.spreadsheet';
 const SHARE_PREFIX = 'workhub.share.';
 const APP_URL = 'https://jingithub111.github.io/work-hub/';
+const BOARD_CACHE = 'workhub.board.v3';
+const VISIT_CACHE = 'workhub.visits.v3';
+const CACHE_SECONDS = 60;
 
 function initializeWorkHub() {
   const book = SpreadsheetApp.getActiveSpreadsheet();
@@ -23,7 +26,7 @@ function initializeWorkHub() {
 function doGet() {
   const props = PropertiesService.getScriptProperties();
   const ready = Boolean(props.getProperty(OWNER_KEY) && props.getProperty(BOOK_ID));
-  return json_({ok: true, version: 2, ready});
+  return json_({ok: true, version: 3, ready});
 }
 
 function doPost(e) {
@@ -33,31 +36,53 @@ function doPost(e) {
   const bookId = props.getProperty(BOOK_ID);
   const key = params.key || '';
   if (!owner || !bookId || !/^[a-f0-9]{64}$/.test(key)) return json_({ok: false, error: 'access'});
+  const isOwner = key === owner;
+  const sharedScope = () => parse_(props.getProperty(SHARE_PREFIX + key), null);
+  let scope = isOwner ? null : sharedScope();
+  const action = params.action;
+  const allowed = isOwner ? ['read', 'visit', 'save', 'shareCreate', 'shareRevoke'] : ['read', 'visit', 'add', 'edit'];
+  if ((!isOwner && !scope) || !allowed.includes(action)) return json_({ok: false, error: 'access'});
+
+  const cache = CacheService.getScriptCache();
+  let book;
+  const openBook = () => {
+    if (!book) book = SpreadsheetApp.openById(bookId);
+    return book;
+  };
   const lock = LockService.getScriptLock();
   let acquired = false;
   try {
+    if (action === 'read') {
+      const snapshot = cache.getAll([BOARD_CACHE, VISIT_CACHE]);
+      const cachedBoard = parse_(snapshot[BOARD_CACHE], null);
+      const cachedVisits = parse_(snapshot[VISIT_CACHE], null);
+      if (cachedBoard && cachedVisits) {
+        if (scope && !hasScope_(cachedBoard, scope)) return json_({ok: false, error: 'access'});
+        return json_(view_(cachedBoard, scope, props, cachedVisits));
+      }
+    }
     acquired = lock.tryLock(10000);
     if (!acquired) return json_({ok: false, error: 'busy'});
-    const isOwner = key === owner;
-    const scope = isOwner ? null : parse_(props.getProperty(SHARE_PREFIX + key), null);
+    scope = isOwner ? null : sharedScope();
     if (!isOwner && !scope) return json_({ok: false, error: 'access'});
 
-    const book = SpreadsheetApp.openById(bookId);
-    const board = readBoard_(book);
-    if (scope && !hasScope_(board.data, scope)) return json_({ok: false, error: 'access'});
-
-    if (params.action === 'read') {
-      return json_(view_(book, board.data, scope, props));
-    }
-
-    if (params.action === 'visit') {
-      const entry = board.entries.find(item => item.link.id === params.id && (!scope || inScope_(item.link, scope)));
-      if (!entry || !/^[a-f0-9]{32}$/.test(params.visitor || '')) {
+    if (action === 'read' || action === 'visit') {
+      let data = parse_(cache.get(BOARD_CACHE), null);
+      if (!data) {
+        data = readBoard_(openBook()).data;
+        cacheJson_(cache, BOARD_CACHE, data);
+      }
+      if (scope && !hasScope_(data, scope)) return json_({ok: false, error: 'access'});
+      if (action === 'read') return json_(view_(data, scope, props, visitCounts_(cache, openBook)));
+      const link = data.links.find(item => item.id === params.id && (!scope || inScope_(item, scope)));
+      if (!link || !/^[a-f0-9]{32}$/.test(params.visitor || '')) {
         return json_({ok: false, error: 'access'});
       }
-      return json_({ok: true, count: recordVisit_(book, entry.link.id, params.visitor)});
+      return json_({ok: true, count: recordVisit_(cache, openBook, link.id, params.visitor)});
     }
 
+    const board = readBoard_(openBook());
+    if (scope && !hasScope_(board.data, scope)) return json_({ok: false, error: 'access'});
     if (isOwner && params.action === 'save') {
       if (params.revision !== revision_(board.data)) return json_({ok: false, error: 'conflict'});
       const next = JSON.parse(params.data);
@@ -66,10 +91,13 @@ function doPost(e) {
         return json_({ok: false, error: 'invalid'});
       }
       // Write the table before pruning shares. The public read also checks that the business exists.
+      cache.remove(BOARD_CACHE);
       writeBoard_(book, next);
       SpreadsheetApp.flush();
       pruneShares_(props, next);
-      return json_(view_(book, readBoard_(book).data, null, props));
+      const updated = readBoard_(book).data;
+      cacheJson_(cache, BOARD_CACHE, updated);
+      return json_(view_(updated, null, props, visitCounts_(cache, openBook)));
     }
 
     if (isOwner && (params.action === 'shareCreate' || params.action === 'shareRevoke')) {
@@ -85,29 +113,47 @@ function doPost(e) {
       return json_({ok: true, shares: shares_(props)});
     }
 
-    if (!isOwner && params.action === 'edit') {
-      if (params.revision !== revision_(project_(board.data, scope))) {
+    if (!isOwner && (action === 'add' || action === 'edit')) {
+      if (action === 'edit' && params.revision !== revision_(project_(board.data, scope))) {
         return json_({ok: false, error: 'conflict'});
       }
-      const fields = JSON.parse(params.data);
-      const entry = board.entries.find(item => item.link.id === params.id && inScope_(item.link, scope));
-      if (!entry) return json_({ok: false, error: 'access'});
-      const edit = editFields_(fields);
+      const edit = editFields_(JSON.parse(params.data));
       if (!edit) return json_({ok: false, error: 'invalid'});
       if (scope.category !== null && scope.category !== edit.cat) return json_({ok: false, error: 'access'});
+      const entry = board.entries.find(item => item.link.id === params.id);
 
-      if (entry.row && board.hasBusinessColumn) {
-        const old = entry.link;
-        board.sheet.getRange(entry.row, 1, 1, LINKS_HEADER.length)
-          .setValues([linkRow_(Object.assign({}, old, edit), entry.order)]);
+      if (action === 'add') {
+        if (!/^[a-f0-9]{32}$/.test(params.id || '')) return json_({ok: false, error: 'invalid'});
+        if (entry) {
+          if (!inScope_(entry.link, scope)) return json_({ok: false, error: 'access'});
+          return json_(view_(board.data, scope, props, visitCounts_(cache, openBook)));
+        }
+        const link = {
+          id: params.id, name: edit.name, url: edit.url, note: edit.note, cat: edit.cat,
+          biz: scope.business, color: edit.color
+        };
+        cache.remove(BOARD_CACHE);
+        board.data.links.push(link);
+        if (board.hasBusinessColumn) {
+          board.sheet.appendRow(linkRow_(link, board.sheet.getLastRow()));
+        } else {
+          writeBoard_(book, board.data);
+        }
       } else {
+        if (!entry || !inScope_(entry.link, scope)) return json_({ok: false, error: 'access'});
+        cache.remove(BOARD_CACHE);
         Object.assign(entry.link, edit);
-        writeBoard_(book, board.data);
+        if (entry.row && board.hasBusinessColumn) {
+          board.sheet.getRange(entry.row, 1, 1, LINKS_HEADER.length).setValues([linkRow_(entry.link, entry.order)]);
+        } else {
+          writeBoard_(book, board.data);
+        }
       }
       SpreadsheetApp.flush();
-      const updated = readBoard_(book).data;
-      pruneShares_(props, updated);
-      return json_(view_(book, updated, scope, props));
+      const updated = board.hasBusinessColumn ? board.data : readBoard_(book).data;
+      if (action === 'edit') pruneShares_(props, updated);
+      cacheJson_(cache, BOARD_CACHE, updated);
+      return json_(view_(updated, scope, props, visitCounts_(cache, openBook)));
     }
     return json_({ok: false, error: 'access'});
   } catch (err) {
@@ -151,9 +197,10 @@ function project_(data, scope) {
   };
 }
 
-function view_(book, data, scope, props) {
+function view_(data, scope, props, counts) {
   const visible = scope ? project_(data, scope) : data;
-  const result = {ok: true, data: visible, revision: revision_(visible), views: viewCounts_(book, visible.links)};
+  const views = Object.fromEntries(visible.links.map(link => [link.id, Number(counts[link.id]) || 0]));
+  const result = {ok: true, data: visible, revision: revision_(visible), views};
   if (!scope) result.shares = shares_(props);
   return result;
 }
@@ -163,16 +210,28 @@ function visitRows_(sheet) {
   return count > 0 ? sheet.getRange(2, 1, count, 2).getValues() : [];
 }
 
-function viewCounts_(book, links) {
-  const counts = Object.create(null);
-  links.forEach(link => { counts[link.id] = 0; });
-  for (const [id] of visitRows_(book.getSheetByName(VISITS_SHEET))) {
-    if (Object.prototype.hasOwnProperty.call(counts, id)) counts[id]++;
+function cacheJson_(cache, key, value) {
+  try {
+    cache.put(key, JSON.stringify(value), CACHE_SECONDS);
+  } catch (err) {
+    // Large boards can exceed the cache limit. Reads still use the sheet.
   }
+}
+
+function visitCounts_(cache, openBook) {
+  const stored = parse_(cache.get(VISIT_CACHE), null);
+  if (stored) return Object.assign(Object.create(null), stored);
+  const counts = Object.create(null);
+  for (const [id, digest] of visitRows_(openBook().getSheetByName(VISITS_SHEET))) {
+    if (id && digest) counts[id] = (counts[id] || 0) + 1;
+  }
+  cacheJson_(cache, VISIT_CACHE, counts);
   return counts;
 }
 
-function recordVisit_(book, id, visitor) {
+function recordVisit_(cache, openBook, id, visitor) {
+  const book = openBook();
+  const counts = visitCounts_(cache, openBook);
   let sheet = book.getSheetByName(VISITS_SHEET);
   if (!sheet) {
     sheet = book.insertSheet(VISITS_SHEET);
@@ -180,11 +239,17 @@ function recordVisit_(book, id, visitor) {
     sheet.setFrozenRows(1);
   }
   const digest = revision_([id, visitor]);
-  const visits = visitRows_(sheet).filter(([link]) => String(link) === id);
-  if (visits.some(([, previous]) => previous === digest)) return visits.length;
+  const count = Number(counts[id]) || 0;
+  const rowCount = sheet.getLastRow() - 1;
+  if (rowCount > 0 && sheet.getRange(2, 2, rowCount, 1).createTextFinder(digest).matchEntireCell(true).findNext()) {
+    return count;
+  }
+  cache.remove(VISIT_CACHE);
   sheet.appendRow([sheetText_(id), digest]);
   SpreadsheetApp.flush();
-  return visits.length + 1;
+  counts[id] = count + 1;
+  cacheJson_(cache, VISIT_CACHE, counts);
+  return count + 1;
 }
 
 function revision_(data) {
