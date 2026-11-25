@@ -68,7 +68,8 @@
     background:#fff;border:1px solid var(--border);border-radius:16px;
     padding:18px;margin:0 auto 18px;width:fit-content;
   }
-  .qr-box img,.qr-box canvas{display:block}
+  .qr-box:has(canvas){padding:0;width:min(100%,256px)}
+  .qr-box canvas{display:block;width:100%;height:auto;image-rendering:pixelated;border-radius:inherit}
   .qr-fail{font-size:13px;color:var(--muted);padding:20px;max-width:240px;word-break:break-all}
 
   /* ปุ่มเลื่อนหมวดในหัวกลุ่ม (โหมดจัดการ) */
@@ -1264,6 +1265,32 @@
   const qrOverlay = $('qr-overlay');
   let qrLink = null;
   const documentReady = new Promise(resolve=>document.addEventListener('DOMContentLoaded', resolve, {once:true}));
+
+  function renderQr(url){
+    const encoder = new QRCode(document.createElement('div'), {
+      text:url, width:220, height:220, correctLevel:QRCode.CorrectLevel.M
+    });
+    // qrcodejs 1.0.0 keeps the encoded modules on this model. Draw each module at an exact pixel size.
+    const matrix = encoder._oQRCode;
+    const modules = matrix.getModuleCount();
+    const margin = 4;
+    const cellSize = Math.ceil(768/(modules+margin*2));
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = (modules+margin*2)*cellSize;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#000';
+    for(let row=0;row<modules;row++){
+      for(let col=0;col<modules;col++){
+        if(matrix.isDark(row,col)) ctx.fillRect((col+margin)*cellSize,(row+margin)*cellSize,cellSize,cellSize);
+      }
+    }
+    canvas.setAttribute('role','img');
+    canvas.setAttribute('aria-label','QR Code');
+    return canvas;
+  }
+
   async function openQr(l){
     qrLink = l;
     $('qr-name').textContent = l.name;
@@ -1271,20 +1298,15 @@
     const box = $('qr-box');
     box.textContent = 'กำลังโหลด QR Code…';
     qrOverlay.classList.add('open');
+    $('qr-dl-btn').disabled = true;
     if(typeof QRCode === 'undefined') await documentReady;
     if(qrLink!==l) return;
     box.textContent = '';
-    if(typeof QRCode !== 'undefined'){
-      new QRCode(box, {
-        text: l.url,
-        width: 220,
-        height: 220,
-        colorDark: '#1F2633',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }else{
-      box.innerHTML = '<div class="qr-fail">สร้าง QR ไม่ได้ (โหลดไลบรารีไม่สำเร็จ — เช็กอินเทอร์เน็ตแล้วรีเฟรช)<br><br>'+esc(l.url)+'</div>';
+    try{
+      box.appendChild(renderQr(l.url));
+      $('qr-dl-btn').disabled = false;
+    }catch(error){
+      box.innerHTML = '<div class="qr-fail">สร้าง QR Code ไม่สำเร็จ ใช้ปุ่มคัดลอกลิงก์เพื่อแชร์ได้</div>';
     }
   }
   function closeQr(){ qrOverlay.classList.remove('open'); qrLink = null; }
@@ -1293,13 +1315,10 @@
 
   $('qr-dl-btn').onclick = ()=>{
     if(!qrLink) return;
-    const box = $('qr-box');
-    const img = box.querySelector('img');
-    const canvas = box.querySelector('canvas');
-    const src = (img && img.src) ? img.src : (canvas ? canvas.toDataURL('image/png') : null);
-    if(!src){ toast('ยังไม่มีรูป QR ให้บันทึก'); return; }
+    const canvas = $('qr-box').querySelector('canvas');
+    if(!canvas) return;
     const a = document.createElement('a');
-    a.href = src;
+    a.href = canvas.toDataURL('image/png');
     a.download = 'qr-' + qrLink.name.replace(/[^\wก-๙-]+/g,'-').slice(0,40) + '.png';
     a.click();
     toast('บันทึกรูป QR แล้ว');
